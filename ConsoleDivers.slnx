@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="ConsoleDivers/ConsoleDivers.vcxproj" Id="f86ae95e-d942-42f9-9bb3-5d47dc49b9de" />
+  <Project Path="CraftEngine/CraftEngine.vcxproj" Id="4153e88a-37fa-4c8e-9e14-2f4ba85b231e" />
+  <Project Path="SoundSystem/SoundSystem.vcxproj" Id="f775c8f8-a41d-41fe-ba7a-d0886bedfd7d" />
+</Solution>
