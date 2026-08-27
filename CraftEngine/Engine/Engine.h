@@ -12,6 +12,7 @@ namespace Craft
 	class Level;
 	class Input;
 	class Renderer;
+	class ConsoleContext;
 	class CollisionSystem;
 
 	// 메인 엔진 클래스
@@ -123,5 +124,8 @@ namespace Craft
 
 		// 사운드 시스템 객체
 		std::unique_ptr<Sound> sound;
+
+		// 콘솔 출력 환경 객체
+		std::unique_ptr<ConsoleContext> consoleContext;
 	};
 }

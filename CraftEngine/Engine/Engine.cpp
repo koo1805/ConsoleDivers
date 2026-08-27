@@ -2,6 +2,7 @@
 #include <Level/Level.h>
 #include <Input/Input.h>
 #include <Render/Renderer.h>
+#include <Render/ConsoleContext.h>
 #include <Physics/CollisionSystem.h>
 #include <SoundSystem/SoundSystem/Sound.h>
 
@@ -25,6 +26,12 @@ namespace Craft
 
 		// 입력 객체 생성
 		input = std::make_unique<Input>();
+
+		// 콘솔 환경 초기화
+		// ANSI Escape Sequence 사용 가능하도록 설정
+		consoleContext = std::make_unique<ConsoleContext>();
+
+		consoleContext->Resize(Vector2(setting.width, setting.height));
 
 		// 렌더러 객체 생성
 		renderer = std::make_unique<Renderer>(
