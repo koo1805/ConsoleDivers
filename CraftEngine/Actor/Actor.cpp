@@ -4,6 +4,10 @@
 
 namespace Craft
 {
+	Actor::Actor(const Vector2& position)
+		: position(position)
+	{ }
+
 	Actor::Actor(
 		const Sprite& sprite,
 		const Vector2& position,
@@ -17,7 +21,7 @@ namespace Craft
 		backgroundColor(backgroundColor)
 	{ }
 
-	Actor::Actor(const Sprite& sprite, const Vector2& position)
+	Actor::Actor(const PixelSprite& pixelSprite, const Vector2& position)
 		: renderType(ActorRenderType::PixelSprite),
 		pixelSprite(pixelSprite),
 		position(position)

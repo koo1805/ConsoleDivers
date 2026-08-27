@@ -40,7 +40,7 @@ namespace Craft
 
 		// PixelSprite 형식
 		Actor(
-			const Sprite& sprite,
+			const PixelSprite& pixelSprite,
 			const Vector2& position = Vector2::Zero
 		);
 
