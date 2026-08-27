@@ -1,100 +1,69 @@
 ﻿#include "ScreenBuffer.h"
 #include <cassert>
-#include <iostream>
 
 namespace Craft
 {
 	ScreenBuffer::ScreenBuffer(const Vector2& screenSize)
-		: size(screenSize)
-	{
-		// 콘솔 버퍼 생성
-		buffer = CreateConsoleScreenBuffer(
-			GENERIC_READ | GENERIC_WRITE,
-			FILE_SHARE_READ | FILE_SHARE_WRITE,
-			nullptr,
-			CONSOLE_TEXTMODE_BUFFER,
-			nullptr
-		);
-
-		// 값 확인(어서트)
-		assert(buffer != INVALID_HANDLE_VALUE);
-
-		// 화면 창 크기 설정
-		SMALL_RECT rect = {};
-		rect.Top = 0;
-		rect.Left = 0;
-		rect.Right = static_cast<short>(size.x - 1);
-		rect.Bottom = static_cast<short>(size.y - 1);
-		BOOL result = SetConsoleWindowInfo(buffer, TRUE, &rect);
-
-		// 결과 확인
-		assert(result == TRUE);
-
-		// 화면 버퍼 크기 설정
-		result = SetConsoleScreenBufferSize(buffer, size);
-		assert(result == TRUE);
-
-		// 직접 만든 콘솔의 커서 끄기
-		CONSOLE_CURSOR_INFO info;
-		result = GetConsoleCursorInfo(buffer, &info);
-		assert(result == TRUE);
-
-		// 커서 안보이게 설정
-		info.bVisible = FALSE;
-		result = SetConsoleCursorInfo(buffer, &info);
-		assert(result == TRUE);
-	}
+		: size(screenSize),
+		cells(static_cast<size_t>(screenSize.x * screenSize.y))
+	{ }
 
 	ScreenBuffer::~ScreenBuffer()
+	{ }
+
+	// Cell의 기본 생성값을 빈 화면 상태로 사용
+	void ScreenBuffer::Clear()
 	{
-		// 콘솔 닫기
-		if (buffer)
+		const Cell emptyCell;
+
+		// 모든 Cell을 기본 상태로 초기화
+		for (Cell& cell : cells)
 		{
-			CloseHandle(buffer);
+			cell = emptyCell;
 		}
 	}
 
-	void ScreenBuffer::Clear() const
+	void ScreenBuffer::SetCell(const Vector2& position, const Cell& cell)
 	{
-		// 콘솔 전체를 지우는 함수
-		// 공백 문자를 화면 전체에 한 번에 설정
+		// 화면 밖의 좌표라면 그리지 않음
+		// Sprite가 화면 밖으로 일부 벗어났을 때 - 잘못된 메모리에 접근하는 것을 방지
+		if (!IsValidPosition(position))
+		{
+			return;
+		}
 
-		// 화면에 설정된 글자 수
-		DWORD writtenCount = 0;
-
-		BOOL result = FillConsoleOutputCharacterA(
-			buffer,
-			' ',
-			size.x * size.y,
-			Vector2::Zero,
-			&writtenCount
-		);
-
-		// 어서트
-		assert(result == TRUE);
+		// 2차원 좌표를 1차원 index로 변환하여 저장
+		cells[GetIndex(position)] = cell;
 	}
 
-	void ScreenBuffer::Draw(const CHAR_INFO* const charInfo) const
+	Cell& ScreenBuffer::GetCell(const Vector2& position)
 	{
-		// charInfo는 2차원 배열 (1차원 배열에 2차원 배열 정보를 기록)
+		// 잘못된 좌표가 들어오면 Debug에서 바로 확인
+		assert(IsValidPosition(position));
 
-		// 설정할 글자 영역
-		SMALL_RECT rect = {
-			0,									// Left
-			0,									// Top
-			static_cast<short>(size.x - 1),		// Right
-			static_cast<short>(size.y - 1)		// Bottom
-		};
+		return cells[GetIndex(position)];
+	}
 
-		// 콘솔에 CHAR_INFO 타입으로 글자 쓰는 함수
-		BOOL result = WriteConsoleOutputA(
-			buffer,
-			charInfo,
-			size,
-			Vector2::Zero,
-			&rect
-		);
+	const Cell& ScreenBuffer::GetCell(const Vector2& position) const
+	{
+		// 잘못된 좌표가 들어오면 Debug에서 바로 확인
+		assert(IsValidPosition(position));
 
-		assert(result == TRUE);
+		return cells[GetIndex(position)];
+	}
+
+	// ScreenBuffer는 논리적으로 2차원이지만 실제 데이터는 1차원 vector에 연속해서 저장
+	int ScreenBuffer::GetIndex(const Vector2& position) const
+	{
+		return position.y * size.x + position.x;
+	}
+
+	// 현재 위치 값이 유효한지 검사
+	bool ScreenBuffer::IsValidPosition(const Vector2& position) const
+	{
+		return (position.x >= 0)
+			&& (position.x < size.x)
+			&& (position.y >= 0)
+			&& (position.y < size.y);
 	}
 }

@@ -2,7 +2,7 @@
 
 #include <Core/Core.h>
 #include <Math/Vector2.h>
-#include <Math/Color.h>
+#include <Math/ColorRGB.h>
 #include <string>
 #include <vector>
 #include <memory>
@@ -11,37 +11,38 @@ namespace Craft
 {
 	// 전방 선언
 	class ScreenBuffer;
+	class Sprite;
+	class PixelSprite;
+
+	enum class RenderType
+	{
+		Text,
+		PixelSprite
+	};
 
 	// 그리기 기능을 전담하는 전문 객체
 	class CRAFT_API Renderer
 	{
-		// 프레임(이미지) 데이터 구조체
-		struct Frame
-		{
-			Frame(int bufferCount);
-			~Frame();
-
-			// 프레임 초기화 함수
-			void Clear(const Vector2& screenSize);
-
-			// 화면에 그릴 2차원 배열 문자값
-			std::unique_ptr<CHAR_INFO[]> charInfoArray;
-
-			// 그리기 정렬 값 이차원 배열
-			std::unique_ptr<int[]> sortingOrderArray;
-		};
-
 		// 화면에 그릴 데이터를 명령 단위로 저장하기 위한 구조체
 		struct RenderCommand
 		{
-			// 화면에 그릴 문자값
+			// 랜더링 데이터 종류
+			RenderType renderType = RenderType::Text;
+
+			// 일반 문자열 랜더링에 사용할 문자값
 			std::string image;
+
+			// PixelSprite 랜더링
+			const PixelSprite* pixelSprite = nullptr;
 
 			// 위치
 			Vector2 position = Vector2::Zero;
 
-			// 색상
-			Color color = Color::White;
+			// 문자 전경 색상
+			ColorRGB foregroundColor = ColorRGB(255, 255, 255);
+
+			// 문자 배경 색상
+			ColorRGB backgroundColor = ColorRGB(0, 0, 0);
 
 			// 그리기 정렬 순서 - 값이 크면 우선순위가 높음
 			int sortingOrder = -1;
@@ -52,10 +53,27 @@ namespace Craft
 		~Renderer();
 
 		// 화면에 그릴 데이터를 제출(전달)하는 함수
+		// 일반 문자열
 		void Submit(
 			const std::string& image,
 			const Vector2& position,
-			Color color = Color::White,
+			const ColorRGB& foregroundColor = ColorRGB(255, 255, 255),
+			const ColorRGB& backgroundColor = ColorRGB(0, 0, 0),
+			int sortingOrder = 0
+		);
+		
+		void Submit(
+			const Sprite& sprite,
+			const Vector2& position,
+			const ColorRGB& foregroundColor = ColorRGB(255, 255, 255),
+			const ColorRGB& backgroundColor = ColorRGB(0, 0, 0),
+			int sortingOrder = 0
+		);
+		
+		// PixelSprite
+		void Submit(
+			const PixelSprite& sprite,
+			const Vector2& position,
 			int sortingOrder = 0
 		);
 
@@ -66,17 +84,23 @@ namespace Craft
 		static Renderer& Get();
 
 	private:
-		// 그리기 작업을 시작할 때 프레임(화면)을 지우는 함수
+		// 그리기 작업을 시작할 때 화면 버퍼를 초기화하는 함수
 		void Clear();
 
-		// 전달 받은 렌더 명령을 활용해 화면을 그리는 함수
+		// 전달 받은 렌더 명령을 활용해 ScreenBuffer의 Cell 데이터를 구성하는 함수
 		void DrawRenderQueue();
 
-		// 그린 결과를 화면에 표시하는 함수
+		// 완성된 화면 버퍼를 화면에 출력하는 함수
 		void Present();
 
+		// 일반 문자열 랜더링
+		void RenderText(const RenderCommand& command);
+
+		// PixelSprite 랜더링
+		void RenderPixel(const RenderCommand& command);
+
 		// Getter.
-		const ScreenBuffer* const GetCurrentBuffer() const;
+		ScreenBuffer* GetCurrentBuffer();
 
 	private:
 		// 전역 접근이 가능하도록 변수 선언
@@ -89,8 +113,9 @@ namespace Craft
 		// 화면 크기
 		Vector2 screenSize;
 
-		// 글자/그리기 순서 2차원 배열을 관리하는 프레임 객체
-		std::unique_ptr<Frame> frame;
+		// 각 Cell에 현재 그려진 객체의 sortingOrder를 저장
+		// 같은 위치에 여러 객체가 겹칠 경우 그리기 우선순위 판단에 사용
+		std::vector<int> sortingOrderBuffer;
 
 		// 이중 버퍼링 구현을 위한 화면 버퍼 2개
 		std::unique_ptr<ScreenBuffer> screenBufferArray[2];

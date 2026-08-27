@@ -5,15 +5,26 @@
 namespace Craft
 {
 	Actor::Actor(
-		const std::string& image,
+		const Sprite& sprite,
 		const Vector2& position,
-		Color color)
-		: image(image), position(position), color(color),
-		width(static_cast<int>(image.length()))
-	{}
+		const ColorRGB& foregroundColor,
+		const ColorRGB& backgroundColor)
+		:
+		renderType(ActorRenderType::Text),
+		sprite(sprite),
+		position(position),
+		foregroundColor(foregroundColor),
+		backgroundColor(backgroundColor)
+	{ }
+
+	Actor::Actor(const Sprite& sprite, const Vector2& position)
+		: renderType(ActorRenderType::PixelSprite),
+		pixelSprite(pixelSprite),
+		position(position)
+	{ }
 
 	Actor::~Actor()
-	{}
+	{ }
 
 	void Actor::BeginPlay()
 	{
@@ -33,7 +44,28 @@ namespace Craft
 		}
 
 		// 렌더러에 필요한 데이터 제출
-		Renderer::Get().Submit(image, position, color, sortingOrder);
+		switch (renderType)
+		{
+		case Craft::ActorRenderType::Text:
+			// Sprite의 각 줄의 문자열을 Renderer에 전달
+			for (int y = 0; y < sprite.GetHeight(); ++y)
+			{
+				const std::string& line = sprite.GetLines()[y];
+
+				Renderer::Get().Submit(
+					line,
+					Vector2(position.x, position.y + y),
+					foregroundColor,
+					backgroundColor,
+					sortingOrder
+				);
+			}
+			break;
+
+		case Craft::ActorRenderType::PixelSprite:
+			Renderer::Get().Submit(pixelSprite, position, sortingOrder);
+			break;
+		}
 	}
 
 	void Actor::OnCollision(const std::shared_ptr<Actor>& other)
@@ -61,5 +93,47 @@ namespace Craft
 		}
 
 		position = newPosition;
+	}
+	int Actor::GetWidth() const
+	{
+		switch (renderType)
+		{
+		case Craft::ActorRenderType::Text:
+			return sprite.GetWidth();
+
+		case Craft::ActorRenderType::PixelSprite:
+			return pixelSprite.GetWidth();
+		}
+
+		return 0;
+	}
+
+	int Actor::GetHeight() const
+	{
+		switch (renderType)
+		{
+		case Craft::ActorRenderType::Text:
+			return sprite.GetHeight();
+
+		case Craft::ActorRenderType::PixelSprite:
+			return pixelSprite.GetHeight();
+		}
+		return 0;
+	}
+
+	void Actor::ChangeSprite(const Sprite& newSprite)
+	{
+		sprite = newSprite;
+
+		// 랜더 타입 변경
+		renderType = ActorRenderType::Text;
+	}
+
+	void Actor::ChangePixelSprite(const PixelSprite& newPixelSprite)
+	{
+		pixelSprite = newPixelSprite;
+
+		// 랜더 타입 변경
+		renderType = ActorRenderType::PixelSprite;
 	}
 }

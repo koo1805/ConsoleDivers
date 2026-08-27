@@ -1,16 +1,24 @@
 ﻿#pragma once
 
 #include <Core/Core.h>
-#include <Math/Vector2.h>
-#include <Math/Color.h>
 #include <Core/CraftObject.h>
+#include <Math/Vector2.h>
+#include <Math/ColorRGB.h>
+#include <Render/Sprite/Sprite.h>
+#include <Render/Sprite/PixelSprite.h>
 #include <memory>		// std::weak_ptr 사용을 위해
-#include <string>
 
 namespace Craft
 {
 	// 전방 선언
 	class Level;
+
+	// Actor의 RenderType
+	enum class ActorRenderType
+	{
+		Text,
+		PixelSprite
+	};
 
 	// 가상 공간에 배치될 모든 액터의 기본 클래스
 	class CRAFT_API Actor : public CraftObject
@@ -19,11 +27,23 @@ namespace Craft
 		TYPE_DECLARATIONS(Actor, CraftObject)
 
 	public:
+		// 기본 Actor
+		Actor(const Vector2& position = Vector2::Zero);
+
+		// 문자열 Sprite 형식
 		Actor(
-			const std::string& image = "",
+			const Sprite& sprite,
 			const Vector2& position = Vector2::Zero,
-			Color color = Color::White
+			const ColorRGB& foregroundColor = ColorRGB(255, 255, 255),
+			const ColorRGB& backgroundColor = ColorRGB(0, 0, 0)
 		);
+
+		// PixelSprite 형식
+		Actor(
+			const Sprite& sprite,
+			const Vector2& position = Vector2::Zero
+		);
+
 		virtual ~Actor();
 
 		// 게임 플레이 이벤트 함수
@@ -57,18 +77,17 @@ namespace Craft
 		// 프레임 종료 후 이전 프레임 위치 저장 함수
 		inline void SavePreviousState() { previousPosition = position; }
 
-		// 너비 반환 함수
-		inline int GetWidth() const { return width; }
+		// 현재 Actor 너비
+		int GetWidth() const;
 
-		// 액터의 이미지 설정 함수
-		inline void ChangeImage(const std::string& newImage)
-		{
-			// 이미지 길이 설정
-			width = static_cast<int>(newImage.length());
+		// 현재 Actor 높이
+		int GetHeight() const;
 
-			// 새로운 글자 값 설정
-			image = newImage;
-		}
+		// 문자열 Sprite변경
+		void ChangeSprite(const Sprite& newSprite);
+
+		// PixelSprite 변경
+		void ChangePixelSprite(const PixelSprite& newPixelSprite);
 
 	protected:
 		// BeginPlay 이벤트 처리 여부 플래그
@@ -85,14 +104,20 @@ namespace Craft
 		// -> 실제 사용을 위해서는 해당 위치가 유효한지 확인해야함
 		std::weak_ptr<Level> owner;
 
-		// 화면에 그릴 글자
-		std::string image;
+		// 현재 랜더 타입
+		ActorRenderType renderType = ActorRenderType::Text;
 
-		// 글자 색상
-		Color color = Color::White;
+		// 일반 문자열 Sprite
+		Sprite sprite;
 
-		// 글자 길이
-		int width = 0;
+		// RGB PixelSprite
+		PixelSprite pixelSprite;
+
+		// 문자열 전경색
+		ColorRGB foregroundColor = ColorRGB(255, 255, 255);
+
+		// 문자열 배경색
+		ColorRGB backgroundColor = ColorRGB(0, 0, 0);
 
 		// 렌더링 순서
 		int sortingOrder = 0;
