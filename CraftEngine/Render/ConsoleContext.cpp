@@ -1,5 +1,7 @@
 #include "ConsoleContext.h"
+#include <Render/ANSIEncoder.h>
 #include <algorithm>
+#include <iostream>
 
 namespace Craft
 {
@@ -15,44 +17,26 @@ namespace Craft
 
 	void ConsoleContext::Resize(const Vector2& screenSize)
 	{
-		// ConsoleContext 초기화에 실패한 상태라면
-		// 콘솔 크기 변경을 시도하지 않는다.
+		// ConsoleContext 초기화에 실패한 상태라면 콘솔 크기 변경을 시도하지 않음
 		if (!initialized)
 		{
 			return;
 		}
 
-		// ----------------------------------------------------
 		// 원하는 화면 크기
-		//
-		// Windows Console API는 SHORT 타입을 사용하므로
-		// Vector2 값을 SHORT로 변환한다.
-		// ----------------------------------------------------
+		// Windows Console API는 SHORT 타입을 사용하므로 Vector2 값을 SHORT로 변환
+		SHORT targetWidth = static_cast<SHORT>(screenSize.x);
 
-		SHORT targetWidth =
-			static_cast<SHORT>(screenSize.x);
+		SHORT targetHeight = static_cast<SHORT>(screenSize.y);
 
-		SHORT targetHeight =
-			static_cast<SHORT>(screenSize.y);
-
-
-		// ----------------------------------------------------
 		// 너무 작은 값 방지
-		// ----------------------------------------------------
-
 		targetWidth = std::max<SHORT>(1, targetWidth);
 		targetHeight = std::max<SHORT>(1, targetHeight);
 
-
-		// ----------------------------------------------------
 		// 현재 콘솔 정보 가져오기
-		// ----------------------------------------------------
-
 		CONSOLE_SCREEN_BUFFER_INFO consoleInfo = {};
 
-		if (!GetConsoleScreenBufferInfo(
-			outputHandle,
-			&consoleInfo))
+		if (!GetConsoleScreenBufferInfo(outputHandle, &consoleInfo))
 		{
 			return;
 		}
@@ -88,56 +72,29 @@ namespace Craft
 			- consoleInfo.srWindow.Top
 			+ 1;
 
-
-		// ----------------------------------------------------
 		// 크기가 줄어드는 경우
-		// ----------------------------------------------------
-
-		if (
-			targetWidth < currentWindowWidth
-			|| targetHeight < currentWindowHeight
-			)
+		if (targetWidth < currentWindowWidth || targetHeight < currentWindowHeight)
 		{
 			SMALL_RECT temporaryWindow = {};
 
 			temporaryWindow.Left = 0;
 			temporaryWindow.Top = 0;
 
-			temporaryWindow.Right =
-				std::min<SHORT>(
-					currentWindowWidth,
-					targetWidth
-				) - 1;
+			temporaryWindow.Right = std::min<SHORT>(currentWindowWidth, targetWidth) - 1;
 
-			temporaryWindow.Bottom =
-				std::min<SHORT>(
-					currentWindowHeight,
-					targetHeight
-				) - 1;
-
+			temporaryWindow.Bottom = std::min<SHORT>(currentWindowHeight, targetHeight) - 1;
 
 			// 먼저 Window 영역을 줄인다.
-			SetConsoleWindowInfo(
-				outputHandle,
-				TRUE,
-				&temporaryWindow
-			);
+			SetConsoleWindowInfo(outputHandle, TRUE, &temporaryWindow);
 		}
 
-
-		// ----------------------------------------------------
 		// ScreenBuffer 크기 변경
-		// ----------------------------------------------------
-
 		COORD bufferSize = {};
 
 		bufferSize.X = targetWidth;
 		bufferSize.Y = targetHeight;
 
-		SetConsoleScreenBufferSize(
-			outputHandle,
-			bufferSize
-		);
+		SetConsoleScreenBufferSize(outputHandle, bufferSize);
 
 
 		// ----------------------------------------------------
@@ -159,18 +116,12 @@ namespace Craft
 		windowRect.Left = 0;
 		windowRect.Top = 0;
 
-		windowRect.Right =
-			targetWidth - 1;
+		windowRect.Right = targetWidth - 1;
 
-		windowRect.Bottom =
-			targetHeight - 1;
+		windowRect.Bottom = targetHeight - 1;
 
 
-		SetConsoleWindowInfo(
-			outputHandle,
-			TRUE,
-			&windowRect
-		);
+		SetConsoleWindowInfo(outputHandle, TRUE, &windowRect);
 	}
 
 	void ConsoleContext::Initialized()
@@ -206,6 +157,16 @@ namespace Craft
 
 		// 여기까지 진행시 정상적으로 콘솔 초기화됨
 		initialized = true;
+
+		// 자동 줄바꿈 비활성화
+		// CursorPosition으로 위치 직접 지정 > 자동 줄바꿈시 실제 좌표와 어긋날 수 있음
+		std::cout << ANSIEncoder::DisableAutoWrap();
+
+		// 콘솔 커서 숨김
+		std::cout << ANSIEncoder::HideCursor();
+
+		// ANSI설정을 즉시 콘솔에 반영
+		std::cout.flush();
 	}
 
 	void ConsoleContext::Restore()
@@ -215,6 +176,18 @@ namespace Craft
 		{
 			return;
 		}
+
+		// 출력상태 초기화
+		std::cout << ANSIEncoder::Reset();
+
+		// 자동 줄바꿈 다시 활성화
+		std::cout << ANSIEncoder::EnableAutoWrap();
+
+		// 콘솔 커서 표시
+		std::cout << ANSIEncoder::ShowCursor();
+
+		// ANSI설정을 즉시 콘솔에 반영
+		std::cout.flush();
 
 		// 원래 콘솔 모드로 복원
 		SetConsoleMode(outputHandle, defaultConsoleMode);

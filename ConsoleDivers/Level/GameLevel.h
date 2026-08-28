@@ -19,6 +19,7 @@ public:
 private:
 	// test용
 	std::shared_ptr<Craft::Actor> testActor;
+	std::shared_ptr<Craft::Actor> testBGActor;
 
 };
 

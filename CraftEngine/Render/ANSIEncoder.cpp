@@ -51,4 +51,35 @@ namespace Craft
 	{
 		return "\x1b[H";
 	}
+
+	// 콘솔 커서를 지정된 위치로 이동
+	// ANSI 문자열은 (y, x)로 기록함
+	std::string ANSIEncoder::CursorPosition(int x, int y)
+	{
+		return "\x1b[" + std::to_string(y) + ";" + std::to_string(x) + "H";
+	}
+
+	// 콘솔 커서 숨김 처리
+	std::string ANSIEncoder::HideCursor()
+	{
+		return "\x1b[?25l";
+	}
+
+	// 콘솔 커서 표시 처리
+	std::string ANSIEncoder::ShowCursor()
+	{
+		return "\x1b[?25h";
+	}
+
+	// 자동 줄바꿈 비활성화 처리
+	std::string ANSIEncoder::DisableAutoWrap()
+	{
+		return "\x1b[?7l";
+	}
+
+	// 자동 줄바꿈 활성화 처리
+	std::string ANSIEncoder::EnableAutoWrap()
+	{
+		return "\x1b[?7h";
+	}
 }

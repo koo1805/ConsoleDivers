@@ -1,9 +1,11 @@
-#include "GameLevel.h"
+﻿#include "GameLevel.h"
 
 #include <Actor/Actor.h>
 #include <Input/Input.h>
+#include <Render/Renderer.h>
 #include <Render/Cell.h>
 #include <Render/Sprite/PixelSprite.h>
+#include <Camera/Camera.h>
 #include <Math/ColorRGB.h>
 #include <Math/Vector2.h>
 
@@ -13,6 +15,82 @@ void GameLevel::OnInitialized()
 {
 	// 부모 Level 초기화
 	Level::OnInitialized();
+
+	// ============================================================
+	// 1. 월드 배경 생성
+	// ============================================================
+
+	// 화면은 120 x 40이지만
+	// 실제 월드는 그보다 훨씬 크게 만든다.
+	const int worldWidth = 240;
+	const int worldHeight = 100;
+
+	Craft::PixelSprite background(worldWidth, worldHeight);
+
+
+	// ------------------------------------------------------------
+	// 배경 색상
+	// ------------------------------------------------------------
+
+	const Craft::ColorRGB darkGray(30, 30, 30);
+	const Craft::ColorRGB gray(55, 55, 55);
+	const Craft::ColorRGB blue(30, 80, 160);
+
+
+	Craft::Cell floorCell;
+	floorCell.character = ' ';
+	floorCell.foreground = darkGray;
+	floorCell.background = darkGray;
+
+
+	Craft::Cell gridCell;
+	gridCell.character = ' ';
+	gridCell.foreground = gray;
+	gridCell.background = gray;
+
+
+	Craft::Cell markerCell;
+	markerCell.character = ' ';
+	markerCell.foreground = blue;
+	markerCell.background = blue;
+
+
+	// ============================================================
+	// 2. 배경 채우기
+	// ============================================================
+
+	for (int y = 0; y < worldHeight; ++y)
+	{
+		for (int x = 0; x < worldWidth; ++x)
+		{
+			Craft::Cell cell = floorCell;
+
+
+			// ----------------------------------------------------
+			// 10칸마다 격자선
+			// ----------------------------------------------------
+
+			if (x % 10 == 0 || y % 5 == 0)
+			{
+				cell = gridCell;
+			}
+
+
+			// ----------------------------------------------------
+			// 50칸마다 더 눈에 잘 띄는 기준선
+			// ----------------------------------------------------
+
+			if (x % 50 == 0 || y % 25 == 0)
+			{
+				cell = markerCell;
+			}
+
+
+			background.SetCell(x, y, cell);
+		}
+	}
+
+	testBGActor = SpawnActor<Craft::Actor>(background, Craft::Vector2(0, 0));
 
 	// ----------------------------------------------------
 	// 테스트용 PixelSprite 생성
@@ -88,8 +166,13 @@ void GameLevel::OnInitialized()
 
 	testActor = SpawnActor<Craft::Actor>(
 		sprite,
-		Craft::Vector2(10, 10)
+		Craft::Vector2(120, 50)
 	);
+
+	// 처음부터 플레이어를 화면 중앙으로 맞춰준다.
+	Craft::Renderer::Get()
+		.GetCamera()
+		.CenterOn(testActor->GetPosition());
 }
 
 
@@ -146,6 +229,9 @@ void GameLevel::Tick(float deltaTime)
 	// ----------------------------------------------------
 
 	testActor->SetPosition(position);
+
+	// 플레이어 위치를 화면 중앙으로 유지
+	Craft::Renderer::Get().GetCamera().CenterOn(testActor->GetPosition());
 
 
 	// ESC로 프로그램 종료 테스트

@@ -13,6 +13,7 @@ namespace Craft
 	class ScreenBuffer;
 	class Sprite;
 	class PixelSprite;
+	class Camera;
 
 	enum class RenderType
 	{
@@ -83,6 +84,9 @@ namespace Craft
 		// 전역 접근 함수
 		static Renderer& Get();
 
+		// 카메라 접근 함수
+		Camera& GetCamera();
+
 	private:
 		// 그리기 작업을 시작할 때 화면 버퍼를 초기화하는 함수
 		void Clear();
@@ -101,6 +105,9 @@ namespace Craft
 
 		// Getter.
 		ScreenBuffer* GetCurrentBuffer();
+
+		// 이전 프레임 화면 버퍼 반환
+		ScreenBuffer* GetPreviousBuffer();
 
 	private:
 		// 전역 접근이 가능하도록 변수 선언
@@ -122,5 +129,8 @@ namespace Craft
 
 		// 버퍼 인덱스
 		int currentBufferIndex = 0;
+
+		// 카메라
+		std::unique_ptr<Camera> camera;
 	};
 }

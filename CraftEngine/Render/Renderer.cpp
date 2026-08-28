@@ -4,6 +4,7 @@
 #include <Render/ANSIEncoder.h>
 #include <Render/Sprite/Sprite.h>
 #include <Render/Sprite/PixelSprite.h>
+#include <Camera/Camera.h>
 #include <cassert>
 #include <iostream>
 
@@ -18,6 +19,8 @@ namespace Craft
 		// Renderer는 하나만 존재해야 함
 		assert(!instance && "instance should be null");
 		instance = this;
+
+		camera = std::make_unique<Camera>(screenSize);
 
 		// 전체 Cell개수
 		const int bufferCount = screenSize.x * screenSize.y;
@@ -119,6 +122,12 @@ namespace Craft
 		return *instance;
 	}
 
+	Camera& Renderer::GetCamera()
+	{
+		assert(camera && "Camera should not be null");
+		return *camera;
+	}
+
 	void Renderer::Clear()
 	{
 		// 현재 버퍼의 모든 Cell 초기화
@@ -156,31 +165,81 @@ namespace Craft
 		// 현재 완성된 화면 버퍼
 		ScreenBuffer* currentBuffer = GetCurrentBuffer();
 
+		// 이전 프레임 버퍼
+		ScreenBuffer* previousBuffer = GetPreviousBuffer();
+
 		// 콘솔에 한 번만 출력할 문자열
 		std::string output;
 
-		// 커서를 화면의 왼쪽 위로 이동
-		output += ANSIEncoder::CursorHome();
+		// 어느정도 메모리 확보 - 매번 문자열이 재할당 되는 것을 줄임
+		output.reserve(static_cast<size_t>(screenSize.x * screenSize.y * 8));
 
-		// 화면 버퍼의 모든 Cell을 순회
+		// 행 단위로 Previous / Current 비교
 		for (int y = 0; y < screenSize.y; ++y)
 		{
-			for (int x = 0; x < screenSize.x; ++x)
-			{
-				// 현재 위치의 Cell 가져오기
-				const Cell& cell = currentBuffer->GetCell(Vector2(x, y));
+			int x = 0;
 
-				// Cell을 24bit ANSI 문자열로 변환하여 추가
-				output += ANSIEncoder::Encode(cell);
+			while (x < screenSize.x)
+			{
+				const Vector2 position(x, y);
+
+				const Cell& currentCell = currentBuffer->GetCell(position);
+
+				const Cell& previousCell = previousBuffer->GetCell(position);
+
+				// 이전 프레임과 같으면 출력 필요 없음
+				if (currentCell == previousCell)
+				{
+					++x;
+
+					continue;
+				}
+
+				// 변경된 구간 시작
+				const int runStartX = x;
+
+				// 변경된 Cell이 연속되는 동안 이동
+				while (x < screenSize.x)
+				{
+					const Vector2 comparePosition(x, y);
+
+					const Cell& current = currentBuffer->GetCell(comparePosition);
+
+					const Cell& previous = previousBuffer->GetCell(comparePosition);
+
+					// 같은 Cell을 만나면 Dirty Run 종료
+					if (current == previous)
+					{
+						break;
+					}
+
+					++x;
+				}
+
+				const int runEndX = x;
+
+				// 변경된 영역의 시작점으로 커서 이동
+				output += ANSIEncoder::CursorPosition(runStartX + 1, y + 1);
+
+				// 변경된 Cell만 출력
+				for (int drawX = runStartX;	drawX < runEndX; ++drawX)
+				{
+					const Cell& cell = currentBuffer->GetCell(Vector2(drawX, y));
+
+					output += ANSIEncoder::Encode(cell);
+				}
+
+				// 색상 초기화
+				output += ANSIEncoder::Reset();
 			}
 		}
 		
-		// 마지막 ANSI 색상 설정 초기화
-		output += ANSIEncoder::Reset();
-
-		// 완성된 화면을 콘솔에 한번에 출력
-		std::cout << output;
-		std::cout.flush();
+		if (!output.empty())
+		{
+			// 완성된 화면을 콘솔에 한번에 출력
+			std::cout << output;
+			std::cout.flush();
+		}
 
 		// 인덱스 업데이트(갱신)
 		// 0 -> 1 -> 0 -> 1 ...
@@ -196,8 +255,11 @@ namespace Craft
 			return;
 		}
 
+		// 월드 좌표를 화면 좌표로 변환
+		const Vector2 screenPosition = camera->WorldToScreen(command.position);
+
 		// y 위치가 화면을 벗어났으면 건너뛰기
-		if (command.position.y < 0 || command.position.y >= screenSize.y)
+		if (screenPosition.y < 0 || screenPosition.y >= screenSize.y)
 		{
 			return;
 		}
@@ -206,7 +268,7 @@ namespace Craft
 		const int length = static_cast<int>(command.image.length());
 
 		// 글자의 시작 위치
-		const int startX = command.position.x;
+		const int startX = screenPosition.x;
 
 		// 글자의 끝 위치
 		const int endX = startX + length - 1;
@@ -229,11 +291,11 @@ namespace Craft
 			const int sourceIndex = x - startX;
 
 			// 화면의 2차원 좌표
-			const Vector2 position(x, command.position.y);
+			const Vector2 position(x, screenPosition.y);
 
 			// 2차원 좌표를 1차원 배열 인덱스로 변환
 			// (y * width) + x
-			const int index = (command.position.y * screenSize.x) + x;
+			const int index = (screenPosition.y * screenSize.x) + x;
 
 			// 정렬 순서를 비교해서 그릴지 말지를 판정
 			// 이미 그려진 값이 우선순위가 높으면 건너뛰기
@@ -267,9 +329,58 @@ namespace Craft
 
 		const PixelSprite& sprite = *command.pixelSprite;
 
-		for (int y = 0; y < sprite.GetHeight(); ++y)
+		// 월드 좌표를 화면 좌표로 변환
+		const Vector2 screenPosition = camera->WorldToScreen(command.position);
+
+		// 검사 변수
+		const int spriteLeft = screenPosition.x;
+		const int spriteRight = screenPosition.x + sprite.GetWidth() - 1;
+
+		const int spriteTop = screenPosition.y;
+		const int spriteBottom = screenPosition.y + sprite.GetHeight() - 1;
+		
+		// Sprite 전체가 화면 밖인지 검사
+		if (spriteRight < 0 || spriteLeft >= screenSize.x || spriteBottom < 0 || spriteTop >= screenSize.y)
 		{
-			for (int x = 0; x < sprite.GetWidth(); ++x)
+			return;
+		}
+
+		// 화면에 보이는 Sprite 내부 범위 계산
+		int startX = 0;
+		int startY = 0;
+
+		int endX = sprite.GetWidth();
+		int endY = sprite.GetHeight();
+
+		// Sprite 왼쪽이 화면 밖에 있는 경우
+		// 예) screenPosition.x = -20 이면 0~19번 Cell은 볼 필요 없음 > 20번째부터 시작
+		if (screenPosition.x < 0)
+		{
+			startX = -screenPosition.x;
+		}
+		
+		// Sprite 오른쪽 검사
+		if (screenPosition.x + endX > screenSize.x)
+		{
+			endX = screenSize.x - screenPosition.x;
+		}
+
+		// Sprite 위쪽 검사
+		if (screenPosition.y < 0)
+		{
+			startY = -screenPosition.y;
+		}
+
+		// Sprite 아래쪽 검사
+		if (screenPosition.y + endY > screenSize.y)
+		{
+			endY = screenSize.y - screenPosition.y;
+		}
+
+		// 화면에 보이는 셀만 순회
+		for (int y = startY; y < endY; ++y)
+		{
+			for (int x = startX; x < endX; ++x)
 			{
 				const Cell& cell = sprite.GetCell(x, y);
 
@@ -280,12 +391,7 @@ namespace Craft
 				}
 
 				// Sprite 내부 위치 + Sprite의 화면 위치
-				const Vector2 position(command.position.x + x, command.position.y + y);
-
-				if (position.x < 0 || position.x >= screenSize.x || position.y < 0 || position.y >= screenSize.y)
-				{
-					continue;
-				}
+				const Vector2 position(screenPosition.x + x, screenPosition.y + y);
 
 				// 2차원 좌표를 1차원 배열 인덱스로 변환
 				const int index = (position.y * screenSize.x) + position.x;
@@ -310,5 +416,10 @@ namespace Craft
 	ScreenBuffer* Renderer::GetCurrentBuffer()
 	{
 		return screenBufferArray[currentBufferIndex].get();
+	}
+
+	ScreenBuffer* Renderer::GetPreviousBuffer()
+	{
+		return screenBufferArray[1 - currentBufferIndex].get();
 	}
 }
