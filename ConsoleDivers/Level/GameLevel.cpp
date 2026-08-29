@@ -22,8 +22,8 @@ void GameLevel::OnInitialized()
 
 	// 화면은 120 x 40이지만
 	// 실제 월드는 그보다 훨씬 크게 만든다.
-	const int worldWidth = 240;
-	const int worldHeight = 100;
+	const int worldWidth = 1080;
+	const int worldHeight = 960;
 
 	Craft::PixelSprite background(worldWidth, worldHeight);
 
@@ -181,6 +181,20 @@ void GameLevel::Tick(float deltaTime)
 	// 부모 Level의 Tick도 호출
 	// Level이 가지고 있는 Actor들의 Tick 실행
 	Level::Tick(deltaTime);
+
+	// 프레임 관련 문자열.
+	const int size = 256;
+	char fpsString[size] = {};
+	sprintf_s(
+		fpsString,
+		size,
+		"dt: %f | fps: %.1f",
+		deltaTime,
+		(1.0f / deltaTime)
+	);
+
+	// 콘솔 창 이름에 값 설정.
+	SetConsoleTitleA(fpsString);
 
 	// Actor가 없으면 종료
 	if (!testActor)

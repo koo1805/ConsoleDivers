@@ -28,6 +28,10 @@ namespace Craft
 		// 현재 버퍼의 크기 반환
 		inline const Vector2& GetSize() const { return size; }
 
+		// 내부 Cell 배열을 읽기 전용으로 반환
+		// Renderer::Present()처럼 이미 유효 범위가 보장된 순회에서 사용
+		inline const std::vector<Cell>& GetCells() const { return cells; }
+
 	private:
 		// 2차원 좌표를 vector에서 사용할 1차원 index로 변환
 		int GetIndex(const Vector2& position) const;

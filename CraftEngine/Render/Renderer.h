@@ -109,6 +109,12 @@ namespace Craft
 		// 이전 프레임 화면 버퍼 반환
 		ScreenBuffer* GetPreviousBuffer();
 
+		// 디버깅
+		// CRAFT_RENDERER_DEBUG가 활성화된 경우 Draw()에서 사용
+		void DebugRenderer();
+
+		void WriteTerminal(const std::string& output);
+
 	private:
 		// 전역 접근이 가능하도록 변수 선언
 		static Renderer* instance;
