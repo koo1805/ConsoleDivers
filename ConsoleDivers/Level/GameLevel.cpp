@@ -159,6 +159,99 @@ void GameLevel::OnInitialized()
 	sprite.SetCell(1, 2, redCell);
 	sprite.SetCell(3, 2, redCell);
 
+	Craft::PixelSprite playerSprite(9, 18);
+
+	const Craft::ColorRGB outlineColor(56, 32, 84);   // 진한 보라 외곽
+	const Craft::ColorRGB purpleColor(106, 74, 145);  // 기본 보라
+	const Craft::ColorRGB goldColor(232, 214, 120);   // 금색 장식
+	const Craft::ColorRGB eyeColor(55, 220, 255);     // 청록 눈
+	const Craft::ColorRGB bodyColor(74, 54, 102);     // 몸통
+	const Craft::ColorRGB legColor(66, 48, 90);       // 다리
+	const Craft::ColorRGB bootColor(48, 40, 64);      // 부츠
+
+	auto MakePixel = [](const Craft::ColorRGB& color)
+		{
+			Craft::Cell cell;
+			cell.character = ' ';      // 중요: '\0' 이 아니어야 보임
+			cell.foreground = color;
+			cell.background = color;
+			return cell;
+		};
+
+	const Craft::Cell outlinePixel = MakePixel(outlineColor);
+	const Craft::Cell purplePixel = MakePixel(purpleColor);
+	const Craft::Cell goldPixel = MakePixel(goldColor);
+	const Craft::Cell eyePixel = MakePixel(eyeColor);
+	const Craft::Cell bodyPixel = MakePixel(bodyColor);
+	const Craft::Cell legPixel = MakePixel(legColor);
+	const Craft::Cell bootPixel = MakePixel(bootColor);
+
+	const char* playerPixels[18] =
+	{
+		"...DGD...",  // 0
+		"..DDGDD..",  // 1
+		".DDPGPDD.",  // 2
+		".DPPGPPD.",  // 3
+		"DDPCCCPDD",  // 4
+		"DDCC.CCDD",  // 5
+		"DPGPPPGPD",  // 6
+		"DGGPPPGGD",  // 7
+		".DPPPPPD.",  // 8
+
+		".DBBBBBD.",  // 9
+		".DBBBBBD.",  // 10
+		"..BBBBB..",  // 11
+		".BBGPGGB.",  // 12
+
+		"..L...L..",  // 13
+		"..L...L..",  // 14
+		"..LG.GL..",  // 15
+		".LL...LL.",  // 16
+		".FF...FF."   // 17
+	};
+
+
+	for (int y = 0; y < 18; ++y)
+	{
+		for (int x = 0; x < 9; ++x)
+		{
+			switch (playerPixels[y][x])
+			{
+			case 'D':
+				playerSprite.SetCell(x, y, outlinePixel);
+				break;
+
+			case 'P':
+				playerSprite.SetCell(x, y, purplePixel);
+				break;
+
+			case 'G':
+				playerSprite.SetCell(x, y, goldPixel);
+				break;
+
+			case 'C':
+				playerSprite.SetCell(x, y, eyePixel);
+				break;
+
+			case 'B':
+				playerSprite.SetCell(x, y, bodyPixel);
+				break;
+
+			case 'L':
+				playerSprite.SetCell(x, y, legPixel);
+				break;
+
+			case 'F':
+				playerSprite.SetCell(x, y, bootPixel);
+				break;
+
+			case '.':
+			default:
+				// 투명 처리
+				break;
+			}
+		}
+	}
 
 	// ----------------------------------------------------
 	// PixelSprite Actor 생성

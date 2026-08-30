@@ -34,9 +34,7 @@ namespace Craft
 		consoleContext->Resize(Vector2(setting.width, setting.height));
 
 		// 렌더러 객체 생성
-		renderer = std::make_unique<Renderer>(
-			Vector2(setting.width, setting.height)
-		);
+		renderer = std::make_unique<Renderer>(Vector2(setting.width, setting.height));
 
 		// 콜리전 시스템 객체 생성
 		collisionSystem = std::make_unique<CollisionSystem>();

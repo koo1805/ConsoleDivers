@@ -15,6 +15,12 @@ namespace Craft
 	public:
 		void Resize(const Vector2& screenSize);
 
+		// 현재 실제 표시 가능한 Window 영역 크기 반환
+		Vector2 GetViewportSize() const;
+
+		// 현재 Window가 요청한 화면 크기를 담을 수 있는지 확인
+		bool CanFitViewport(const Vector2& screenSize) const;
+
 	private:
 		// 콘솔 화면 초기화 함수
 		void Initialized();

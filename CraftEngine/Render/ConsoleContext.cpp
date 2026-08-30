@@ -62,15 +62,9 @@ namespace Craft
 
 
 		// 현재 콘솔 창 크기 계산
-		SHORT currentWindowWidth =
-			consoleInfo.srWindow.Right
-			- consoleInfo.srWindow.Left
-			+ 1;
+		SHORT currentWindowWidth = consoleInfo.srWindow.Right - consoleInfo.srWindow.Left + 1;
 
-		SHORT currentWindowHeight =
-			consoleInfo.srWindow.Bottom
-			- consoleInfo.srWindow.Top
-			+ 1;
+		SHORT currentWindowHeight = consoleInfo.srWindow.Bottom - consoleInfo.srWindow.Top + 1;
 
 		// 크기가 줄어드는 경우
 		if (targetWidth < currentWindowWidth || targetHeight < currentWindowHeight)
@@ -120,8 +114,35 @@ namespace Craft
 
 		windowRect.Bottom = targetHeight - 1;
 
-
 		SetConsoleWindowInfo(outputHandle, TRUE, &windowRect);
+	}
+
+	// 현재 실제 표시 영역 가져오기
+	Vector2 ConsoleContext::GetViewportSize() const
+	{
+		if (!initialized)
+		{
+			return Vector2();
+		}
+
+		CONSOLE_SCREEN_BUFFER_INFO consoleInfo = {};
+
+		if (!GetConsoleScreenBufferInfo(outputHandle, &consoleInfo))
+		{
+			return Vector2();
+		}
+
+		const int width = consoleInfo.srWindow.Right - consoleInfo.srWindow.Left + 1;
+		const int height = consoleInfo.srWindow.Bottom - consoleInfo.srWindow.Top + 1;
+
+		return Vector2(width, height);
+	}
+
+	bool ConsoleContext::CanFitViewport(const Vector2& screenSize) const
+	{
+		const Vector2 viewportSize = GetViewportSize();
+
+		return viewportSize.x >= screenSize.x && viewportSize.y >= screenSize.y;
 	}
 
 	void ConsoleContext::Initialized()
