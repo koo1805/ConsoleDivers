@@ -158,8 +158,56 @@ namespace Craft
 
 		// ANSI Cursor Forward -> ESC[nC
 		output += "\x1b[";
-		AppendInteger(output, distance);
+		// ANSI의 기본 이동 거리는 1이므로 distance == 1이면 숫자를 생략할 수 있음
+		if (distance > 1)
+		{
+			AppendInteger(output, distance);
+		}
 		output += 'C';
+	}
+
+	void ANSIEncoder::AppendCursorDown(std::string& output, int distance)
+	{
+		// 이동할 필요가 없으면 출력하지 않음
+		if (distance <= 0)
+		{
+			return;
+		}
+
+		// ANSI Cursor Down -> ESC[nB
+		output += "\x1b[";
+		// ANSI의 기본 이동 거리는 1이므로 distance == 1이면 숫자를 생략할 수 있음
+		if (distance > 1)
+		{
+			AppendInteger(output, distance);
+		}
+		output += 'B';
+	}
+
+	void ANSIEncoder::AppendCursorColumn(std::string & output, int column)
+	{
+		// ANSI Cursor Horizontal Absolute -> ESC[nG
+		output += "\x1b[";
+		AppendInteger(output, column);
+		output += 'G';
+	}
+
+	void ANSIEncoder::AppendCursorNextLine(std::string & output, int distance)
+	{
+		if (distance <= 0)
+		{
+			return;
+		}
+
+		// ANSI Cursor Next Line -> ESC[nE
+		// 지정된 행만큼 아래로 이동하면서 커서를 해당 행의 첫 번째 열로 이동
+		output += "\x1b[";
+		// ANSI의 기본 이동 거리는 1이므로 distance == 1이면 숫자를 생략할 수 있음
+		if (distance > 1)
+		{
+			AppendInteger(output, distance);
+		}
+		output += 'E';
 	}
 
 	// 콘솔 커서 숨김 처리

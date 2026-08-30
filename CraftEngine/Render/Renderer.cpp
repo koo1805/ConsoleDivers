@@ -71,6 +71,40 @@ namespace Craft
 	// 총 3 + distance digits
 	int RelativeCursorByteCount(int distance)
 	{
+		// ANSI 기본 이동 거리가 1이므로 숫자 생략 가능
+		// ESC[C
+		if (distance == 1)
+		{
+			return 3;
+		}
+
+		return 3 + DigitCount(distance);
+	}
+
+	int CursorDownByteCount(int distance)
+	{
+		// ANSI 기본 이동 거리가 1이므로 숫자 생략 가능
+		if (distance == 1)
+		{
+			return 3;
+		}
+
+		return 3 + DigitCount(distance);
+	}
+
+	int CursorColumnByteCount(int column)
+	{
+		return 3 + DigitCount(column);
+	}
+
+	int CursorNextLineByteCount(int distance)
+	{
+		// ANSI 기본 이동 거리가 1이므로 숫자 생략 가능
+		if (distance == 1)
+		{
+			return 3;
+		}
+
 		return 3 + DigitCount(distance);
 	}
 
@@ -93,6 +127,15 @@ namespace Craft
 
 		// 터미널로 전달한 최종 문자열 크기
 		size_t outputByteCount = 0;
+
+		// 절대 좌표 CursorPosition을 사용한 횟수
+		size_t absoluteCursorCount = 0;
+
+		// Absolute가 아닌 상대 Cursor 이동 전략을 사용한 Dirty Run 횟수
+		size_t relativeCursorCount = 0;
+
+		// WriteFile이 실제로 기록했다고 반환한 바이트 수
+		size_t writtenByteCount = 0;
 
 		// Present() 내부 측정
 		double buildOutputTimeMs = 0.0;
@@ -120,6 +163,13 @@ namespace Craft
 		rendererDebugStats.backgroundChangeCount = 0;
 
 		rendererDebugStats.outputByteCount = 0;
+
+		// Cursor 이동 방식 카운터 초기화
+		rendererDebugStats.absoluteCursorCount = 0;
+		rendererDebugStats.relativeCursorCount = 0;
+
+		// 실제 WriteFile 기록 바이트 초기화
+		rendererDebugStats.writtenByteCount = 0;
 
 		// Present 내부 시간 초기화
 		rendererDebugStats.buildOutputTimeMs = 0.0;
@@ -391,6 +441,9 @@ namespace Craft
 				// 변경된 영역의 시작점으로 커서 이동
 				if (!hasCursorPosition)
 				{
+#if CRAFT_RENDERER_DEBUG
+					++rendererDebugStats.absoluteCursorCount;
+#endif
 					// 첫 Dirty Run은 안전하게 절대 위치 이동
 					ANSIEncoder::AppendCursorPosition(output, runStartX + 1, y + 1);
 				}
@@ -409,18 +462,90 @@ namespace Craft
 					// 실제 ANSI 문자열이 더 짧은 쪽 선택
 					if (relativeCost < absoluteCost)
 					{
+#if CRAFT_RENDERER_DEBUG
+						++rendererDebugStats.relativeCursorCount;
+#endif
 						ANSIEncoder::AppendCursorForward(output, distance);
 					}
 					else
 					{
+#if CRAFT_RENDERER_DEBUG
+						++rendererDebugStats.absoluteCursorCount;
+#endif
 						ANSIEncoder::AppendCursorPosition(output, runStartX + 1, y + 1);
 					}
 				}
+				// 다른 행으로 이동하는 경우
 				else
 				{
-					// 다른 행이거나 현재 위치보다 왼쪽으로 이동해야 하면
-					// 기존 Absolute CursorPosition 사용
-					ANSIEncoder::AppendCursorPosition(output, runStartX + 1, y + 1);
+					// 현재 위치보다 아래 행으로 이동하는 경우
+					if (cachedCursorY < y &&hasCursorPosition)
+					{
+						const int rowDistance = y - cachedCursorY;
+
+						// ANSI 좌표는 1-based
+						const int targetColumn = runStartX + 1;
+
+						// 1. Absolute -> ESC[row;columnH
+						const int absoluteCost = AbsoluteCursorByteCount(targetColumn, y + 1);
+
+						// 2. Cursor Down + Horizontal Absolute
+						// ESC[nB	|	ESC[columnG
+						const int downColumnCost = CursorDownByteCount(rowDistance) + CursorColumnByteCount(targetColumn);
+
+						// 3. Cursor Next Line + Forward
+						// CursorNextLine은 이동 후 1열에 위치 -> runStartX == 0이면 Forward가 필요 없음
+						int nextLineCost = CursorNextLineByteCount(rowDistance);
+
+						if (runStartX > 0)
+						{
+							nextLineCost += RelativeCursorByteCount(runStartX);
+						}
+
+						// 가장 짧은 ANSI 방식 선택
+						if (nextLineCost < absoluteCost && nextLineCost < downColumnCost)
+						{
+#if CRAFT_RENDERER_DEBUG
+							++rendererDebugStats.relativeCursorCount;
+#endif
+							// 아래 행으로 이동하면서 1열로 이동
+							ANSIEncoder::AppendCursorNextLine(output, rowDistance);
+
+							// 목표 위치가 첫 열이 아니면 오른쪽으로 추가 이동
+							if (runStartX > 0)
+							{
+								ANSIEncoder::AppendCursorForward(output, runStartX);
+							}
+						}
+						else if (downColumnCost < absoluteCost)
+						{
+#if CRAFT_RENDERER_DEBUG
+							++rendererDebugStats.relativeCursorCount;
+#endif
+							// 현재 column을 유지한 채 아래로 이동
+							ANSIEncoder::AppendCursorDown(output, rowDistance);
+
+							// 목표 열로 절대 이동
+							ANSIEncoder::AppendCursorColumn(output, targetColumn);
+						}
+						else
+						{
+#if CRAFT_RENDERER_DEBUG
+							++rendererDebugStats.absoluteCursorCount;
+#endif
+							// 기존 Absolute가 가장 짧은 경우
+							ANSIEncoder::AppendCursorPosition(output, targetColumn, y + 1);
+						}
+					}
+					else
+					{
+#if CRAFT_RENDERER_DEBUG
+						++rendererDebugStats.absoluteCursorCount;
+#endif
+						// 위쪽 행으로 돌아가거나 위치 추적이 불가능한 경우에는
+						// 기존 Absolute 방식 사용
+						ANSIEncoder::AppendCursorPosition(output, runStartX + 1, y + 1);
+					}
 				}
 
 				// 커서는 이제 Dirty Run 시작 위치에 있음
@@ -743,7 +868,7 @@ namespace Craft
 		// 현재 렌더링 FPS 계산
 		const double renderFPS = frameMs > 0.0 ? 1000.0 / frameMs : 0.0;
 
-		constexpr double DROP_FPS = 90.0;
+		constexpr double DROP_FPS = 70.0;
 
 		if (renderFPS < DROP_FPS)
 		{
@@ -793,6 +918,14 @@ namespace Craft
 				<< rendererDebugStats.dirtyRunCount
 				<< "\n"
 
+				<< "Abs Cursor : "
+				<< rendererDebugStats.absoluteCursorCount
+				<< "\n"
+
+				<< "Rel Cursor : "
+				<< rendererDebugStats.relativeCursorCount
+				<< "\n"
+
 				<< "FG Changes : "
 				<< rendererDebugStats.foregroundChangeCount
 				<< "\n"
@@ -803,6 +936,10 @@ namespace Craft
 
 				<< "OutputBytes: "
 				<< rendererDebugStats.outputByteCount
+				<< "\n"
+
+				<< "WrittenBytes: "
+				<< rendererDebugStats.writtenByteCount
 				<< "\n"
 
 				<< "================================\n";
@@ -874,6 +1011,9 @@ namespace Craft
 			WriteFile(outputHandle, output.data(), static_cast<DWORD>(output.size()), &writtenBytes, nullptr);
 
 #if CRAFT_RENDERER_DEBUG
+			// 실제 WriteFile 기록 바이트 수 저장
+			rendererDebugStats.writtenByteCount = static_cast<size_t>(writtenBytes);
+
 			// WriteFile 측정 종료
 			const auto terminalWriteEnd = Clock::now();
 

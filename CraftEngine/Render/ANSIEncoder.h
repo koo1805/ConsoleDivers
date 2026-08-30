@@ -43,11 +43,20 @@ namespace Craft
 		// 콘솔 커서를 지정된 위치로 이동
 		static std::string CursorPosition(int x, int y);
 
-		// 커서 이동 ANSI 코드를 임시 문자열 생성 없이 기존 output에 바로 추가
+		// 커서 이동 ANSI 코드를 임시 문자열 생성 없이 기존(절대 위치 이동) output에 바로 추가
 		static void AppendCursorPosition(std::string& output, int x, int y);
 
-		// 현재 위치에서 오른쪽으로 지정된 칸만큼 커서 이동  -> ANSI: ESC[nC
+		// 현재 위치에서 오른쪽으로 지정된 칸만큼 커서 이동(상대 이동) -> ANSI: ESC[nC
 		static void AppendCursorForward(std::string& output, int distance);
+
+		// 현재 위치에서 아래로 지정된 행만큼 이동(상대 이동) -> ANSI: ESC[nB
+		static void AppendCursorDown(std::string& output, int distance);
+
+		// 현재 행에서 지정된 열로 이동(절대 열 이동) -> ANSI: ESC[nG
+		static void AppendCursorColumn(std::string& output, int column);
+
+		// 지정된 행만큼 아래로 이동하면서 커서를 1열로 이동 -> ANSI: ESC[nE
+		static void AppendCursorNextLine(std::string& output, int distance);
 
 		// 콘솔 커서 표시 관련
 		// ----------------------------------------------------------
