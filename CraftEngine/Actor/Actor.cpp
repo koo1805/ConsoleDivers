@@ -4,13 +4,13 @@
 
 namespace Craft
 {
-	Actor::Actor(const Vector2& position)
+	Actor::Actor(const Vector2F& position)
 		: position(position)
 	{ }
 
 	Actor::Actor(
 		const Sprite& sprite,
-		const Vector2& position,
+		const Vector2F& position,
 		const ColorRGB& foregroundColor,
 		const ColorRGB& backgroundColor)
 		:
@@ -21,7 +21,7 @@ namespace Craft
 		backgroundColor(backgroundColor)
 	{ }
 
-	Actor::Actor(const PixelSprite& pixelSprite, const Vector2& position)
+	Actor::Actor(const PixelSprite& pixelSprite, const Vector2F& position)
 		: renderType(ActorRenderType::PixelSprite),
 		pixelSprite(pixelSprite),
 		position(position)
@@ -47,6 +47,8 @@ namespace Craft
 			return;
 		}
 
+		const Vector2 renderPosition(static_cast<int>(position.x), static_cast<int>(position.y));
+
 		// 렌더러에 필요한 데이터 제출
 		switch (renderType)
 		{
@@ -58,7 +60,7 @@ namespace Craft
 
 				Renderer::Get().Submit(
 					line,
-					Vector2(position.x, position.y + y),
+					Vector2(renderPosition.x, renderPosition.y + y),
 					foregroundColor,
 					backgroundColor,
 					sortingOrder
@@ -67,7 +69,7 @@ namespace Craft
 			break;
 
 		case Craft::ActorRenderType::PixelSprite:
-			Renderer::Get().Submit(pixelSprite, position, sortingOrder);
+			Renderer::Get().Submit(pixelSprite, renderPosition, sortingOrder);
 			break;
 		}
 	}
@@ -88,7 +90,7 @@ namespace Craft
 		Engine::Get().Quit();
 	}
 
-	void Actor::SetPosition(const Vector2& newPosition)
+	void Actor::SetPosition(const Vector2F& newPosition)
 	{
 		// 변경하려는 위치 값이 기존 값과 동일하면 종료
 		if (position == newPosition)

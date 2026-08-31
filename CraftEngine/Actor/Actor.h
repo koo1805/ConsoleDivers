@@ -3,6 +3,7 @@
 #include <Core/Core.h>
 #include <Core/CraftObject.h>
 #include <Math/Vector2.h>
+#include <Math/Vector2F.h>
 #include <Math/ColorRGB.h>
 #include <Render/Sprite/Sprite.h>
 #include <Render/Sprite/PixelSprite.h>
@@ -28,12 +29,12 @@ namespace Craft
 
 	public:
 		// 기본 Actor
-		Actor(const Vector2& position = Vector2::Zero);
+		Actor(const Vector2F& position = Vector2F::Zero);
 
 		// 문자열 Sprite 형식
 		Actor(
 			const Sprite& sprite,
-			const Vector2& position = Vector2::Zero,
+			const Vector2F& position = Vector2F::Zero,
 			const ColorRGB& foregroundColor = ColorRGB(255, 255, 255),
 			const ColorRGB& backgroundColor = ColorRGB(0, 0, 0)
 		);
@@ -41,7 +42,7 @@ namespace Craft
 		// PixelSprite 형식
 		Actor(
 			const PixelSprite& pixelSprite,
-			const Vector2& position = Vector2::Zero
+			const Vector2F& position = Vector2F::Zero
 		);
 
 		virtual ~Actor();
@@ -68,11 +69,11 @@ namespace Craft
 		inline std::shared_ptr<Level> GetOwner() const { return owner.lock(); }
 		inline void SetOwner(std::weak_ptr<Level> newOwner) { owner = newOwner; }
 
-		inline Vector2 GetPosition() const { return position; }
-		void SetPosition(const Vector2& newPosition);
+		inline Vector2F GetPosition() const { return position; }
+		void SetPosition(const Vector2F& newPosition);
 
 		// 이전 위치 반환 함수
-		inline Vector2 GetPreviousPosition() const { return previousPosition; }
+		inline Vector2F GetPreviousPosition() const { return previousPosition; }
 
 		// 프레임 종료 후 이전 프레임 위치 저장 함수
 		inline void SavePreviousState() { previousPosition = position; }
@@ -123,9 +124,9 @@ namespace Craft
 		int sortingOrder = 0;
 
 		// 위치
-		Vector2 position;
+		Vector2F position;
 
 		// 이전 프레임 위치
-		Vector2 previousPosition;
+		Vector2F previousPosition;
 	};
 }

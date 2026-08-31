@@ -83,23 +83,23 @@ namespace Craft
 		// y는 크기가 1이기 때문에 x좌표만 고려
 
 		// left 액터의 현재/이전 위치
-		const Vector2 leftCurrent = left->GetPosition();
-		const Vector2 leftPrevious = left->GetPreviousPosition();
+		const Vector2F leftCurrent = left->GetPosition();
+		const Vector2F leftPrevious = left->GetPreviousPosition();
 
 		// right 액터의 현재/이전 위치
-		const Vector2 rightCurrent = right->GetPosition();
-		const Vector2 rightPrevious = right->GetPreviousPosition();
+		const Vector2F rightCurrent = right->GetPosition();
+		const Vector2F rightPrevious = right->GetPreviousPosition();
 
 		// 이전 프레임 위치와 현재 위치를 모두 포함하는 swept bounds 계산
-		const int leftXMin = (leftCurrent.x < leftPrevious.x) ? leftCurrent.x : leftPrevious.x;
-		const int leftXMaxCurrent = leftCurrent.x + left->GetWidth() - 1;
-		const int leftXMaxPrevious = leftPrevious.x + left->GetWidth() - 1;
-		const int leftXMax = (leftXMaxCurrent > leftXMaxPrevious) ? leftXMaxCurrent : leftXMaxPrevious;
+		const float leftXMin = (leftCurrent.x < leftPrevious.x) ? leftCurrent.x : leftPrevious.x;
+		const float leftXMaxCurrent = leftCurrent.x + left->GetWidth() - 1.0f;
+		const float leftXMaxPrevious = leftPrevious.x + left->GetWidth() - 1.0f;
+		const float leftXMax = (leftXMaxCurrent > leftXMaxPrevious) ? leftXMaxCurrent : leftXMaxPrevious;
 
-		const int rightXMin = (rightCurrent.x < rightPrevious.x) ? rightCurrent.x : rightPrevious.x;
-		const int rightXMaxCurrent = rightCurrent.x + right->GetWidth() - 1;
-		const int rightXMaxPrevious = rightPrevious.x + right->GetWidth() - 1;
-		const int rightXMax = (rightXMaxCurrent > rightXMaxPrevious) ? rightXMaxCurrent : rightXMaxPrevious;
+		const float rightXMin = (rightCurrent.x < rightPrevious.x) ? rightCurrent.x : rightPrevious.x;
+		const float rightXMaxCurrent = rightCurrent.x + right->GetWidth() - 1.0f;
+		const float rightXMaxPrevious = rightPrevious.x + right->GetWidth() - 1.0f;
+		const float rightXMax = (rightXMaxCurrent > rightXMaxPrevious) ? rightXMaxCurrent : rightXMaxPrevious;
 
 		// X좌표 기준으로 충돌이 발생할 수 없는 상황 처리
 		if (rightXMin > leftXMax)
@@ -113,11 +113,11 @@ namespace Craft
 		}
 
 		// 이전 프레임까지 고려한 y 충돌 영역 계산
-		const int leftYMin = (leftCurrent.y < leftPrevious.y) ? leftCurrent.y : leftPrevious.y;
-		const int leftYMax = (leftCurrent.y > leftPrevious.y) ? leftCurrent.y : leftPrevious.y;
+		const float leftYMin = (leftCurrent.y < leftPrevious.y) ? leftCurrent.y : leftPrevious.y;
+		const float leftYMax = (leftCurrent.y > leftPrevious.y) ? leftCurrent.y : leftPrevious.y;
 
-		const int rightYMin = (rightCurrent.y < rightPrevious.y) ? rightCurrent.y : rightPrevious.y;
-		const int rightYMax = (rightCurrent.y > rightPrevious.y) ? rightCurrent.y : rightPrevious.y;
+		const float rightYMin = (rightCurrent.y < rightPrevious.y) ? rightCurrent.y : rightPrevious.y;
+		const float rightYMax = (rightCurrent.y > rightPrevious.y) ? rightCurrent.y : rightPrevious.y;
 
 		// y좌표 기준으로 충돌이 발생할 수 없는 상황 처리
 		if (rightYMin > leftYMax)

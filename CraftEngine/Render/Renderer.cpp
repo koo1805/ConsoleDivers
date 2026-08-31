@@ -654,7 +654,7 @@ namespace Craft
 		}
 
 		// 월드 좌표를 화면 좌표로 변환
-		const Vector2 screenPosition = camera->WorldToScreen(command.position);
+		const Vector2 screenPosition = camera->WorldToScreen(Vector2F(static_cast<float>(command.position.x), static_cast<float>(command.position.y)));
 
 		// y 위치가 화면을 벗어났으면 건너뛰기
 		if (screenPosition.y < 0 || screenPosition.y >= screenSize.y)
@@ -728,7 +728,7 @@ namespace Craft
 		const PixelSprite& sprite = *command.pixelSprite;
 
 		// 월드 좌표를 화면 좌표로 변환
-		const Vector2 screenPosition = camera->WorldToScreen(command.position);
+		const Vector2 screenPosition = camera->WorldToScreen(Vector2F(static_cast<float>(command.position.x), static_cast<float>(command.position.y)));
 
 		// 검사 변수
 		const int spriteLeft = screenPosition.x;
@@ -868,7 +868,7 @@ namespace Craft
 		// 현재 렌더링 FPS 계산
 		const double renderFPS = frameMs > 0.0 ? 1000.0 / frameMs : 0.0;
 
-		constexpr double DROP_FPS = 70.0;
+		constexpr double DROP_FPS = 60.0;
 
 		if (renderFPS < DROP_FPS)
 		{

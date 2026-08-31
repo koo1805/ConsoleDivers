@@ -3,7 +3,12 @@
 #include <Level/Level.h>
 #include <memory>
 
-class Actor;
+namespace Craft
+{
+	class TestActor;
+	class TestBG;
+	class CameraController;
+}
 
 class GameLevel : public Craft::Level
 {
@@ -18,8 +23,10 @@ public:
 
 private:
 	// test용
-	std::shared_ptr<Craft::Actor> testActor;
-	std::shared_ptr<Craft::Actor> testBGActor;
+	std::shared_ptr<Craft::TestActor> testActor;
+	std::shared_ptr<Craft::TestBG> testBGActor;
+
+	std::shared_ptr<Craft::CameraController> cameraController;
 
 };
 
