@@ -64,7 +64,16 @@ namespace Craft
 		bool isTargetMoving = false;
 
 		// 카메라가 목표에 따라가는 속도 [값이 클수록 빨라짐]
-		float followSpeed = 8.0f;
+		float followSpeed = 20.0f;
+
+		// 현재 카메라 추적 속도
+		float currentFollowSpeed = 0.0f;
+
+		// 초당 증가하는 추적 속도
+		float followAcceleration = 100.0f;
+
+		// 최대 추적 속도
+		float maxFollowSpeed = 300.0f;
 
 		// 보간 종료 거리 값
 		float lockTreshold = 0.5f;

@@ -44,6 +44,8 @@ namespace Craft
 
 		stopTimer = 0.0f;
 
+		currentFollowSpeed = followSpeed;
+
 		followState = CameraFollowState::LockedFollow;
 	}
 
@@ -51,6 +53,9 @@ namespace Craft
 	void CameraController::StartSmoothFollow()
 	{
 		stopTimer = 0.0f;
+
+		// Smooth 시작 속도 초기화
+		currentFollowSpeed = followSpeed;
 
 		followState = CameraFollowState::SmoothFollow;
 	}
@@ -63,6 +68,12 @@ namespace Craft
 		}
 
 		followSpeed = newFollowSpeed;
+
+		// 현재 Smooth 상태가 아니라면 다음 Smooth 시작값도 같이 맞춤
+		if (followState != CameraFollowState::SmoothFollow)
+		{
+			currentFollowSpeed = followSpeed;
+		}
 	}
 
 	void CameraController::UpdateSmoothFollow(float deltaTime)
@@ -79,28 +90,51 @@ namespace Craft
 		const Vector2F currentPosition = camera.GetPosition();
 
 		// 목표와 현재 위치 차이
-		const float distanceX = std::abs(desiredPosition.x - currentPosition.x);
+		const float differenceX = desiredPosition.x - currentPosition.x;
 
-		const float distanceY = std::abs(desiredPosition.y - currentPosition.y);
+		const float differenceY = desiredPosition.y - currentPosition.y;
+
+		const float distance = std::sqrt((differenceX * differenceX) + (differenceY * differenceY));
 
 		// 목표와 가까우면 보간 종료
-		if (distanceX <= lockTreshold && distanceY <= lockTreshold)
+		if (distance <= lockTreshold)
 		{
 			camera.SetPosition(desiredPosition);
+
+			currentFollowSpeed = followSpeed;
 
 			followState = CameraFollowState::LockedFollow;
 
 			return;
 		}
 
-		// 아직 멀면 기존 보간 진행
-		// 현재 위치에서 목표 위치까지 부드럽게 이동 (보간)
-		const float followMove = std::clamp(followSpeed * deltaTime, 0.0f, 1.0f);
+		// Smooth 상태가 유지될수록 추적 속도 증가
+		currentFollowSpeed += followAcceleration * deltaTime;
+		currentFollowSpeed = (std::min)(currentFollowSpeed, maxFollowSpeed);
+		// 이번 프레임 카메라 이동 거리
+		const float moveDistance = currentFollowSpeed * deltaTime;
 
-		Vector2F newPosition;
+		// 다음 이동에서 목표를 지나칠 것 같으면 목표 위치에 바로 고정
+		if (moveDistance >= distance)
+		{
+			camera.SetPosition(desiredPosition);
 
-		newPosition.x = currentPosition.x + (desiredPosition.x - currentPosition.x) * followMove;
-		newPosition.y = currentPosition.y + (desiredPosition.y - currentPosition.y) * followMove;
+			currentFollowSpeed = followSpeed;
+
+			followState = CameraFollowState::LockedFollow;
+
+			return;
+		}
+
+		// 목표 방향 계산
+		const float directionX = differenceX / distance;
+		const float directionY = differenceY / distance;
+
+		// 현재 속도만큼 목표 방향으로 이동
+		Vector2F newPosition = currentPosition;
+
+		newPosition.x += directionX * moveDistance;
+		newPosition.y += directionY * moveDistance;
 
 		camera.SetPosition(newPosition);
 	}
@@ -134,8 +168,8 @@ namespace Craft
 			return;
 		}
 
-		// 데드존을 벗어나면 다시 보간 추적
-		followState = CameraFollowState::SmoothFollow;
+		// 데드존을 벗어나면 보간 추적 시
+		StartSmoothFollow();
 	}
 
 	bool CameraController::IsTargetInsideDeadZone() const
