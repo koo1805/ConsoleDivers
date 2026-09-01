@@ -22,6 +22,9 @@ namespace Craft
 		// 특정 월드 위치가 화면 중앙에 오도록 카메라 이동
 		void CenterOn(const Vector2F& targetPosition);
 
+		// 중앙 정렬 시 실제 도달 가능한 카메라 위치 계산
+		Vector2F CalculateCenterPosition(const Vector2F& targetPosition) const;
+
 		// 월드 좌표 -> 화면 좌표로 변환
 		Vector2 WorldToScreen(const Vector2F& worldPosition) const;
 

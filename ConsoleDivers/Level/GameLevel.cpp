@@ -4,11 +4,12 @@
 #include <Camera/Camera.h>
 #include <Camera/Controller/CameraController.h>
 
-#include <Test/TestActor.h>
+#include <Actor/Player/Player.h>
 #include <Test/TestBG.h>
 
 #include <Windows.h>
 
+using namespace Craft;
 void GameLevel::OnInitialized()
 {
 	// 부모 Level 초기화
@@ -17,10 +18,10 @@ void GameLevel::OnInitialized()
 	testBGActor = SpawnActor<Craft::TestBG>();
 	Craft::Renderer::Get().GetCamera().SetCameraClampSize(Craft::TestBG::GetWorldSize());
 
-	testActor = SpawnActor<Craft::TestActor>();
+	player = SpawnActor<Player>();
 
 	cameraController = std::make_shared<Craft::CameraController>(Craft::Renderer::Get().GetCamera());
-	cameraController->SetTargetPosition(testActor->GetPosition());
+	cameraController->SetTargetPosition(player->GetPosition());
 
 	cameraController->SnapToTarget();
 }
@@ -47,7 +48,7 @@ void GameLevel::Tick(float deltaTime)
 	SetConsoleTitleA(fpsString);
 
 	// Actor가 없으면 종료
-	if (!testActor || !cameraController)
+	if (!player || !cameraController)
 	{
 		return;
 	}
@@ -56,7 +57,7 @@ void GameLevel::Tick(float deltaTime)
 	// 변경된 위치 적용
 	// ----------------------------------------------------
 	
-	cameraController->SetTargetPosition(testActor->GetPosition());
-	cameraController->SetTargetMoving(testActor->IsMoving());
+	cameraController->SetTargetPosition(player->GetPosition());
+	cameraController->SetTargetMoving(player->IsMoving());
 	cameraController->Tick(deltaTime);
 }

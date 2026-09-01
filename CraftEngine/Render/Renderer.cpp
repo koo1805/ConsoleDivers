@@ -868,7 +868,7 @@ namespace Craft
 		// 현재 렌더링 FPS 계산
 		const double renderFPS = frameMs > 0.0 ? 1000.0 / frameMs : 0.0;
 
-		constexpr double DROP_FPS = 60.0;
+		constexpr double DROP_FPS = 40.0;
 
 		if (renderFPS < DROP_FPS)
 		{

@@ -70,10 +70,10 @@ namespace Craft
 		float currentFollowSpeed = 0.0f;
 
 		// 초당 증가하는 추적 속도
-		float followAcceleration = 100.0f;
+		float followAcceleration = 200.0f;
 
 		// 최대 추적 속도
-		float maxFollowSpeed = 300.0f;
+		float maxFollowSpeed = 1200.0f;
 
 		// 보간 종료 거리 값
 		float lockTreshold = 0.5f;

@@ -1,11 +1,11 @@
-#pragma once
+ï»¿#pragma once
 
 #include <Math/Vector2.h>
 #include <Windows.h>
 
 namespace Craft
 {
-	// Window ÄÜ¼ÖÀÇ Ãâ·Â È¯°æÀ» °ü¸®ÇÏ´Â Å¬·¡½º
+	// Window ì½˜ì†”ì˜ ì¶œë ¥ í™˜ê²½ì„ ê´€ë¦¬í•˜ëŠ” í´ë˜ìŠ¤
 	class ConsoleContext
 	{
 	public:
@@ -15,28 +15,28 @@ namespace Craft
 	public:
 		void Resize(const Vector2& screenSize);
 
-		// ÇöÀç ½ÇÁ¦ Ç¥½Ã °¡´ÉÇÑ Window ¿µ¿ª Å©±â ¹İÈ¯
+		// í˜„ì¬ ì‹¤ì œ í‘œì‹œ ê°€ëŠ¥í•œ Window ì˜ì—­ í¬ê¸° ë°˜í™˜
 		Vector2 GetViewportSize() const;
 
-		// ÇöÀç Window°¡ ¿äÃ»ÇÑ È­¸é Å©±â¸¦ ´ãÀ» ¼ö ÀÖ´ÂÁö È®ÀÎ
+		// í˜„ì¬ Windowê°€ ìš”ì²­í•œ í™”ë©´ í¬ê¸°ë¥¼ ë‹´ì„ ìˆ˜ ìˆëŠ”ì§€ í™•ì¸
 		bool CanFitViewport(const Vector2& screenSize) const;
 
 	private:
-		// ÄÜ¼Ö È­¸é ÃÊ±âÈ­ ÇÔ¼ö
+		// ì½˜ì†” í™”ë©´ ì´ˆê¸°í™” í•¨ìˆ˜
 		void Initialized();
 
-		// ÇÁ·Î±×·¥ Á¾·á½Ã ±âÁ¸ Console Mode º¹¿ø ÇÔ¼ö
+		// í”„ë¡œê·¸ë¨ ì¢…ë£Œì‹œ ê¸°ì¡´ Console Mode ë³µì› í•¨ìˆ˜
 		void Restore();
 
 	private:
-		// Ç¥ÁØ Ãâ·Â ÄÜ¼Ö Handle
+		// í‘œì¤€ ì¶œë ¥ ì½˜ì†” Handle
 		HANDLE outputHandle = INVALID_HANDLE_VALUE;
 
-		// ConsoleContext°¡ º¯°æÇÏ±â ÀüÀÇ ¿ø·¡ Console Mode
+		// ConsoleContextê°€ ë³€ê²½í•˜ê¸° ì „ì˜ ì›ë˜ Console Mode
 		DWORD defaultConsoleMode = 0;
 
-		// Console Mode¸¦ Á¤»óÀûÀ¸·Î ÀúÀåÇß´ÂÁö È®ÀÎÇÏ´Â °ª
-		// ÃÊ±âÈ­¿¡ ½ÇÆĞÇÑ »óÅÂ¿¡¼­ Restore()°¡ È£ÃâµÇ´Â °ÍÀ» ¹æÁö
+		// Console Modeë¥¼ ì •ìƒì ìœ¼ë¡œ ì €ì¥í–ˆëŠ”ì§€ í™•ì¸í•˜ëŠ” ê°’
+		// ì´ˆê¸°í™”ì— ì‹¤íŒ¨í•œ ìƒíƒœì—ì„œ Restore()ê°€ í˜¸ì¶œë˜ëŠ” ê²ƒì„ ë°©ì§€
 		bool initialized = false;
 	};
 }

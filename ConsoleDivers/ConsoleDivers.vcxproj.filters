@@ -27,6 +27,9 @@
     <ClCompile Include="Test\TestBG.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Actor\Player\Player.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Level\GameLevel.h">
@@ -36,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Test\TestBG.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Player\Player.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -79,13 +79,7 @@ namespace Craft
 	void CameraController::UpdateSmoothFollow(float deltaTime)
 	{
 		// Smooth 상태
-		// 목표가 화면 중앙에 오게 되었을 때 Camera의 왼쪽 위 좌표를 계산
-		const Vector2 viewportSize = camera.GetViewportSize();
-
-		Vector2F desiredPosition;
-
-		desiredPosition.x = targetPosition.x - (static_cast<float>(viewportSize.x) / 2.0f);
-		desiredPosition.y = targetPosition.y - (static_cast<float>(viewportSize.y) / 2.0f);
+		const Vector2F desiredPosition = camera.CalculateCenterPosition(targetPosition);
 
 		const Vector2F currentPosition = camera.GetPosition();
 
@@ -111,6 +105,7 @@ namespace Craft
 		// Smooth 상태가 유지될수록 추적 속도 증가
 		currentFollowSpeed += followAcceleration * deltaTime;
 		currentFollowSpeed = (std::min)(currentFollowSpeed, maxFollowSpeed);
+
 		// 이번 프레임 카메라 이동 거리
 		const float moveDistance = currentFollowSpeed * deltaTime;
 
@@ -168,7 +163,24 @@ namespace Craft
 			return;
 		}
 
-		// 데드존을 벗어나면 보간 추적 시
+		// 목표를 화면 중앙에 두기 위해 카메라가 실제로 도달 가능한 위치 계산
+		const Vector2F desiredPosition = camera.CalculateCenterPosition(targetPosition);
+
+		const Vector2F currentPosition = camera.GetPosition();
+
+		// 현재 카메라 위치와 실제 도달 가능한 목표 위치의 차이
+		const float diffX = desiredPosition.x - currentPosition.x;
+		const float diffY = desiredPosition.y - currentPosition.y;
+
+		const float distance = std::sqrt((diffX * diffX) + (diffY * diffY));
+
+		// 목표가 데드존 밖에 있지만 카메라가 이미 월드 끝에 도달한 경우 SmoothFollow로 진입을 안함
+		if (distance <= lockTreshold)
+		{
+			return;
+		}
+
+		// 이동 가능할 때 보간 추적 시
 		StartSmoothFollow();
 	}
 

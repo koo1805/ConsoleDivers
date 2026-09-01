@@ -1,4 +1,4 @@
-#include "ConsoleContext.h"
+ï»¿#include "ConsoleContext.h"
 #include <Render/ANSIEncoder.h>
 #include <algorithm>
 #include <iostream>
@@ -17,23 +17,23 @@ namespace Craft
 
 	void ConsoleContext::Resize(const Vector2& screenSize)
 	{
-		// ConsoleContext ÃÊ±âÈ­¿¡ ½ÇÆĞÇÑ »óÅÂ¶ó¸é ÄÜ¼Ö Å©±â º¯°æÀ» ½ÃµµÇÏÁö ¾ÊÀ½
+		// ConsoleContext ì´ˆê¸°í™”ì— ì‹¤íŒ¨í•œ ìƒíƒœë¼ë©´ ì½˜ì†” í¬ê¸° ë³€ê²½ì„ ì‹œë„í•˜ì§€ ì•ŠìŒ
 		if (!initialized)
 		{
 			return;
 		}
 
-		// ¿øÇÏ´Â È­¸é Å©±â
-		// Windows Console API´Â SHORT Å¸ÀÔÀ» »ç¿ëÇÏ¹Ç·Î Vector2 °ªÀ» SHORT·Î º¯È¯
+		// ì›í•˜ëŠ” í™”ë©´ í¬ê¸°
+		// Windows Console APIëŠ” SHORT íƒ€ì…ì„ ì‚¬ìš©í•˜ë¯€ë¡œ Vector2 ê°’ì„ SHORTë¡œ ë³€í™˜
 		SHORT targetWidth = static_cast<SHORT>(screenSize.x);
 
 		SHORT targetHeight = static_cast<SHORT>(screenSize.y);
 
-		// ³Ê¹« ÀÛÀº °ª ¹æÁö
+		// ë„ˆë¬´ ì‘ì€ ê°’ ë°©ì§€
 		targetWidth = std::max<SHORT>(1, targetWidth);
 		targetHeight = std::max<SHORT>(1, targetHeight);
 
-		// ÇöÀç ÄÜ¼Ö Á¤º¸ °¡Á®¿À±â
+		// í˜„ì¬ ì½˜ì†” ì •ë³´ ê°€ì ¸ì˜¤ê¸°
 		CONSOLE_SCREEN_BUFFER_INFO consoleInfo = {};
 
 		if (!GetConsoleScreenBufferInfo(outputHandle, &consoleInfo))
@@ -43,30 +43,30 @@ namespace Craft
 
 
 		// ----------------------------------------------------
-		// Windows ConsoleÀÇ Å©±â º¯°æ¿¡´Â Á¦¾àÀÌ ÀÖ´Ù.
+		// Windows Consoleì˜ í¬ê¸° ë³€ê²½ì—ëŠ” ì œì•½ì´ ìˆë‹¤.
 		//
-		// Window ¿µ¿ªÀº ScreenBufferº¸´Ù Å¬ ¼ö ¾ø´Ù.
+		// Window ì˜ì—­ì€ ScreenBufferë³´ë‹¤ í´ ìˆ˜ ì—†ë‹¤.
 		//
-		// µû¶ó¼­ Å©±â¸¦ ÁÙÀÌ´Â °æ¿ì¿¡´Â
+		// ë”°ë¼ì„œ í¬ê¸°ë¥¼ ì¤„ì´ëŠ” ê²½ìš°ì—ëŠ”
 		//
-		// 1. Window¸¦ ¸ÕÀú ÀÛ°Ô ¸¸µç´Ù.
-		// 2. ScreenBuffer¸¦ ÁÙÀÎ´Ù.
+		// 1. Windowë¥¼ ë¨¼ì € ì‘ê²Œ ë§Œë“ ë‹¤.
+		// 2. ScreenBufferë¥¼ ì¤„ì¸ë‹¤.
 		//
-		// ¹İ´ë·Î Å©±â¸¦ Å°¿ì´Â °æ¿ì¿¡´Â
+		// ë°˜ëŒ€ë¡œ í¬ê¸°ë¥¼ í‚¤ìš°ëŠ” ê²½ìš°ì—ëŠ”
 		//
-		// 1. ScreenBuffer¸¦ ¸ÕÀú Å°¿î´Ù.
-		// 2. Window¸¦ Å°¿î´Ù.
+		// 1. ScreenBufferë¥¼ ë¨¼ì € í‚¤ìš´ë‹¤.
+		// 2. Windowë¥¼ í‚¤ìš´ë‹¤.
 		//
-		// ÀÌ ¼ø¼­¸¦ ÁöÄÑ¾ß Resize ½ÇÆĞ °¡´É¼ºÀ» ÁÙÀÏ ¼ö ÀÖ´Ù.
+		// ì´ ìˆœì„œë¥¼ ì§€ì¼œì•¼ Resize ì‹¤íŒ¨ ê°€ëŠ¥ì„±ì„ ì¤„ì¼ ìˆ˜ ìˆë‹¤.
 		// ----------------------------------------------------
 
 
-		// ÇöÀç ÄÜ¼Ö Ã¢ Å©±â °è»ê
+		// í˜„ì¬ ì½˜ì†” ì°½ í¬ê¸° ê³„ì‚°
 		SHORT currentWindowWidth = consoleInfo.srWindow.Right - consoleInfo.srWindow.Left + 1;
 
 		SHORT currentWindowHeight = consoleInfo.srWindow.Bottom - consoleInfo.srWindow.Top + 1;
 
-		// Å©±â°¡ ÁÙ¾îµå´Â °æ¿ì
+		// í¬ê¸°ê°€ ì¤„ì–´ë“œëŠ” ê²½ìš°
 		if (targetWidth < currentWindowWidth || targetHeight < currentWindowHeight)
 		{
 			SMALL_RECT temporaryWindow = {};
@@ -78,11 +78,11 @@ namespace Craft
 
 			temporaryWindow.Bottom = std::min<SHORT>(currentWindowHeight, targetHeight) - 1;
 
-			// ¸ÕÀú Window ¿µ¿ªÀ» ÁÙÀÎ´Ù.
+			// ë¨¼ì € Window ì˜ì—­ì„ ì¤„ì¸ë‹¤.
 			SetConsoleWindowInfo(outputHandle, TRUE, &temporaryWindow);
 		}
 
-		// ScreenBuffer Å©±â º¯°æ
+		// ScreenBuffer í¬ê¸° ë³€ê²½
 		COORD bufferSize = {};
 
 		bufferSize.X = targetWidth;
@@ -92,12 +92,12 @@ namespace Craft
 
 
 		// ----------------------------------------------------
-		// ÃÖÁ¾ Window ¿µ¿ª ¼³Á¤
+		// ìµœì¢… Window ì˜ì—­ ì„¤ì •
 		//
-		// SMALL_RECT´Â Å©±â°¡ ¾Æ´Ï¶ó
-		// ¸¶Áö¸· CellÀÇ ÁÂÇ¥¸¦ »ç¿ëÇÑ´Ù.
+		// SMALL_RECTëŠ” í¬ê¸°ê°€ ì•„ë‹ˆë¼
+		// ë§ˆì§€ë§‰ Cellì˜ ì¢Œí‘œë¥¼ ì‚¬ìš©í•œë‹¤.
 		//
-		// ¿¹:
+		// ì˜ˆ:
 		//
 		// 160 x 45
 		//
@@ -117,7 +117,7 @@ namespace Craft
 		SetConsoleWindowInfo(outputHandle, TRUE, &windowRect);
 	}
 
-	// ÇöÀç ½ÇÁ¦ Ç¥½Ã ¿µ¿ª °¡Á®¿À±â
+	// í˜„ì¬ ì‹¤ì œ í‘œì‹œ ì˜ì—­ ê°€ì ¸ì˜¤ê¸°
 	Vector2 ConsoleContext::GetViewportSize() const
 	{
 		if (!initialized)
@@ -147,70 +147,70 @@ namespace Craft
 
 	void ConsoleContext::Initialized()
 	{
-		// WindowsÀÇ Ç¥ÁØ Ãâ·Â Handle
+		// Windowsì˜ í‘œì¤€ ì¶œë ¥ Handle
 		outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-		// ¿¹¿Ü Ã³¸®
+		// ì˜ˆì™¸ ì²˜ë¦¬
 		if (outputHandle == INVALID_HANDLE_VALUE || outputHandle == nullptr)
 		{
 			return;
 		}
 
-		// ÇöÀç ÄÜ¼Ö ¸ğµå¸¦ °¡Á®¿È
-		// defaultConsoleMode¿¡ ±âÁ¸ °ª ÀúÀå - Á¾·á ½Ã º¹±¸ÇÏ±â À§ÇÑ ÀÛ¾÷
+		// í˜„ì¬ ì½˜ì†” ëª¨ë“œë¥¼ ê°€ì ¸ì˜´
+		// defaultConsoleModeì— ê¸°ì¡´ ê°’ ì €ì¥ - ì¢…ë£Œ ì‹œ ë³µêµ¬í•˜ê¸° ìœ„í•œ ì‘ì—…
 		if (!GetConsoleMode(outputHandle, &defaultConsoleMode))
 		{
 			return;
 		}
 
-		// ±âÁ¸ consoleMode º¹»ç
+		// ê¸°ì¡´ consoleMode ë³µì‚¬
 		DWORD consoleMode = defaultConsoleMode;
 
-		// ANSI Escape Sequence¸¦ windows ÄÜ¼Ö¿¡¼­ »ç¿ë°¡´ÉÇÏµµ·Ï ÇÔ
-		// "\x1b[38;2;255;0;0m"	>  24bit ANSI ¸í·ÉÀ» ½ÇÁ¦ »ö»ó º¯°æ ¸í·ÉÀ¸·Î Ã³¸®ÇÔ
+		// ANSI Escape Sequenceë¥¼ windows ì½˜ì†”ì—ì„œ ì‚¬ìš©ê°€ëŠ¥í•˜ë„ë¡ í•¨
+		// "\x1b[38;2;255;0;0m"	>  24bit ANSI ëª…ë ¹ì„ ì‹¤ì œ ìƒ‰ìƒ ë³€ê²½ ëª…ë ¹ìœ¼ë¡œ ì²˜ë¦¬í•¨
 		consoleMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
-		// º¯°æµÈ ÄÜ¼Ö ¸ğµå Àû¿ë
+		// ë³€ê²½ëœ ì½˜ì†” ëª¨ë“œ ì ìš©
 		if (!SetConsoleMode(outputHandle, consoleMode))
 		{
 			return;
 		}
 
-		// ¿©±â±îÁö ÁøÇà½Ã Á¤»óÀûÀ¸·Î ÄÜ¼Ö ÃÊ±âÈ­µÊ
+		// ì—¬ê¸°ê¹Œì§€ ì§„í–‰ì‹œ ì •ìƒì ìœ¼ë¡œ ì½˜ì†” ì´ˆê¸°í™”ë¨
 		initialized = true;
 
-		// ÀÚµ¿ ÁÙ¹Ù²Ş ºñÈ°¼ºÈ­
-		// CursorPositionÀ¸·Î À§Ä¡ Á÷Á¢ ÁöÁ¤ > ÀÚµ¿ ÁÙ¹Ù²Ş½Ã ½ÇÁ¦ ÁÂÇ¥¿Í ¾î±ß³¯ ¼ö ÀÖÀ½
+		// ìë™ ì¤„ë°”ê¿ˆ ë¹„í™œì„±í™”
+		// CursorPositionìœ¼ë¡œ ìœ„ì¹˜ ì§ì ‘ ì§€ì • > ìë™ ì¤„ë°”ê¿ˆì‹œ ì‹¤ì œ ì¢Œí‘œì™€ ì–´ê¸‹ë‚  ìˆ˜ ìˆìŒ
 		std::cout << ANSIEncoder::DisableAutoWrap();
 
-		// ÄÜ¼Ö Ä¿¼­ ¼û±è
+		// ì½˜ì†” ì»¤ì„œ ìˆ¨ê¹€
 		std::cout << ANSIEncoder::HideCursor();
 
-		// ANSI¼³Á¤À» Áï½Ã ÄÜ¼Ö¿¡ ¹İ¿µ
+		// ANSIì„¤ì •ì„ ì¦‰ì‹œ ì½˜ì†”ì— ë°˜ì˜
 		std::cout.flush();
 	}
 
 	void ConsoleContext::Restore()
 	{
-		// ÃÊ±âÈ­°¡ Á¤»óÀûÀ¸·Î ³¡³ªÁö ¾ÊÀ¸¸é º¹¿øÇÒ ÄÜ¼Ö ¸ğµå°¡ ¾øÀ¸¹Ç·Î Á¾·á
+		// ì´ˆê¸°í™”ê°€ ì •ìƒì ìœ¼ë¡œ ëë‚˜ì§€ ì•Šìœ¼ë©´ ë³µì›í•  ì½˜ì†” ëª¨ë“œê°€ ì—†ìœ¼ë¯€ë¡œ ì¢…ë£Œ
 		if (!initialized)
 		{
 			return;
 		}
 
-		// Ãâ·Â»óÅÂ ÃÊ±âÈ­
+		// ì¶œë ¥ìƒíƒœ ì´ˆê¸°í™”
 		std::cout << ANSIEncoder::Reset();
 
-		// ÀÚµ¿ ÁÙ¹Ù²Ş ´Ù½Ã È°¼ºÈ­
+		// ìë™ ì¤„ë°”ê¿ˆ ë‹¤ì‹œ í™œì„±í™”
 		std::cout << ANSIEncoder::EnableAutoWrap();
 
-		// ÄÜ¼Ö Ä¿¼­ Ç¥½Ã
+		// ì½˜ì†” ì»¤ì„œ í‘œì‹œ
 		std::cout << ANSIEncoder::ShowCursor();
 
-		// ANSI¼³Á¤À» Áï½Ã ÄÜ¼Ö¿¡ ¹İ¿µ
+		// ANSIì„¤ì •ì„ ì¦‰ì‹œ ì½˜ì†”ì— ë°˜ì˜
 		std::cout.flush();
 
-		// ¿ø·¡ ÄÜ¼Ö ¸ğµå·Î º¹¿ø
+		// ì›ë˜ ì½˜ì†” ëª¨ë“œë¡œ ë³µì›
 		SetConsoleMode(outputHandle, defaultConsoleMode);
 	}
 }

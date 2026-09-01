@@ -3,9 +3,11 @@
 #include <Level/Level.h>
 #include <memory>
 
+// 전방 선언
+class Player;
+
 namespace Craft
 {
-	class TestActor;
 	class TestBG;
 	class CameraController;
 }
@@ -22,8 +24,8 @@ public:
 	virtual void Tick(float deltaTime) override;
 
 private:
+	std::shared_ptr<Player> player;
 	// test용
-	std::shared_ptr<Craft::TestActor> testActor;
 	std::shared_ptr<Craft::TestBG> testBGActor;
 
 	std::shared_ptr<Craft::CameraController> cameraController;

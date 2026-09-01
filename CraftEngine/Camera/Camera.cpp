@@ -26,12 +26,26 @@ namespace Craft
 	void Camera::CenterOn(const Vector2F& targetPosition)
 	{
 		// 대상의 위치가 화면 중앙에 오도록 함
-		// 카메라의 왼쪽위 월드 좌표 계산
-		position.x = targetPosition.x - (static_cast<float>(viewportSize.x / 2.0f));
-		position.y = targetPosition.y - (static_cast<float>(viewportSize.y / 2.0f));
+		SetPosition(CalculateCenterPosition(targetPosition));
+	}
 
-		// 계산된 카메라가 월드 바깥으로 나가지 않도록 제한
-		ClampPosition();
+	Vector2F Camera::CalculateCenterPosition(const Vector2F& targetPosition) const
+	{
+		Vector2F centerPosition;
+
+		// 목표가 화면 중앙에 오도록 카메라 좌상단 좌표 계산 
+		centerPosition.x = targetPosition.x - (static_cast<float>(viewportSize.x) / 2.0f);
+		centerPosition.y = targetPosition.y - (static_cast<float>(viewportSize.y) / 2.0f);
+
+		// 카메라 이동 가능한 최대 위치
+		const float maxX = static_cast<float>((std::max)(0, worldSize.x - viewportSize.x));
+		const float maxY = static_cast<float>((std::max)(0, worldSize.y - viewportSize.y));
+
+		// 실제 도달 가능한 범위로 제한
+		centerPosition.x = std::clamp(centerPosition.x, 0.0f, maxX);
+		centerPosition.y = std::clamp(centerPosition.y, 0.0f, maxY);
+
+		return centerPosition;
 	}
 
 	Vector2 Camera::WorldToScreen(const Vector2F& worldPosition) const
