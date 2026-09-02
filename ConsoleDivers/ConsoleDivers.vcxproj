@@ -98,6 +98,8 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Actor\Character\Character.cpp" />
+    <ClCompile Include="Actor\Character\CharacterPart.cpp" />
     <ClCompile Include="Actor\Player\Player.cpp" />
     <ClCompile Include="Debugging\DebugManager.cpp" />
     <ClCompile Include="Level\GameLevel.cpp" />
@@ -106,6 +108,9 @@
     <ClCompile Include="Test\TestBG.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Actor\Character\Character.h" />
+    <ClInclude Include="Actor\Character\CharacterPart.h" />
+    <ClInclude Include="Actor\Character\CharacterStats.h" />
     <ClInclude Include="Actor\Player\Player.h" />
     <ClInclude Include="Debugging\DebugManager.h" />
     <ClInclude Include="Level\GameLevel.h" />

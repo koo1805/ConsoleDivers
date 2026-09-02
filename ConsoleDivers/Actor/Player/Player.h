@@ -1,10 +1,10 @@
 ﻿#pragma once
 
-#include <Actor/Actor.h>
+#include <Actor/Character/Character.h>
 
-class Player : public Craft::Actor
+class Player : public Character
 {
-	TYPE_DECLARATIONS(Player, Actor)
+	TYPE_DECLARATIONS(Player, Character)
 
 public:
 	Player();
@@ -15,16 +15,16 @@ public:
 private:
 	virtual void Tick(float deltaTime) override;
 
-	void PlayerSpriteGenerate();
+	void PlayerPartsGenerate();
 
 	void Move(float xDirection, float yDirection, float deltaTime);
 
 private:
 	bool isMoving = false;
 
-	// 이동 처리에 필요함 변수
-
-	// 이동 속도 변수
-	float moveSpeed = 80.0f;
+	// 기존 Player의 전체 크기 유지
+	// Character가 여러 Sprite로 분리되더라도 = 카메라 / 월드 Bounds 계산에서는 기존 9 x 15 크기로 동작
+	static constexpr int PlayerWidth = 9;
+	static constexpr int PlayerHeight = 15;
 };
 
