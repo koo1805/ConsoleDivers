@@ -63,7 +63,7 @@
     <ClCompile Include="Camera\Controller\CameraController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Render\Debug\DebugRenderer.cpp">
+    <ClCompile Include="Render\Debugging\DebugRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -134,7 +134,7 @@
     <ClInclude Include="Camera\Controller\CameraController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Render\Debug\DebugRenderer.h">
+    <ClInclude Include="Render\Debugging\DebugRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

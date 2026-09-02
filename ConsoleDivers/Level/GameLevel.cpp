@@ -3,7 +3,7 @@
 #include <Render/Renderer.h>
 #include <Camera/Camera.h>
 #include <Camera/Controller/CameraController.h>
-#include <Debug/DebugManager.h>
+#include <Debugging/DebugManager.h>
 #include <Actor/Player/Player.h>
 
 #include <Test/TestBG.h>
