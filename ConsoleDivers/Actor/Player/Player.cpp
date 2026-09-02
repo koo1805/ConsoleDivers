@@ -1,96 +1,11 @@
 ﻿#include "Player.h"
-#include <Engine/Engine.h>
+#include <Render/Renderer.h>
+#include <Camera/Camera.h>
 #include <Input/Input.h>
 
 #include <memory>
 
 using namespace Craft;
-
-namespace
-{
-	Craft::Cell MakePixel(const Craft::ColorRGB& color)
-	{
-		Craft::Cell cell;
-
-		cell.character = ' ';
-		cell.foreground = color;
-		cell.background = color;
-
-		return cell;
-	};
-
-	Craft::PixelSprite MakePartSprite(
-		int width,
-		int height,
-		const char* const* pixels,
-		const Craft::Cell& outlinePixel,
-		const Craft::Cell& helmetPixel,
-		const Craft::Cell& helmetLightPixel,
-		const Craft::Cell& visorPixel,
-		const Craft::Cell& armorPixel,
-		const Craft::Cell& armorLightPixel,
-		const Craft::Cell& yellowPixel,
-		const Craft::Cell& legPixel,
-		const Craft::Cell& bootPixel)
-	{
-		Craft::PixelSprite sprite(width, height);
-
-		for (int y = 0; y < 15; ++y)
-		{
-			for (int x = 0; x < 9; ++x)
-			{
-				switch (pixels[y][x])
-				{
-				case 'O':
-					sprite.SetCell(x, y, outlinePixel);
-					break;
-
-				case 'H':
-					sprite.SetCell(x, y, helmetPixel);
-					break;
-
-				case 'h':
-					sprite.SetCell(x, y, helmetLightPixel);
-					break;
-
-				case 'V':
-					sprite.SetCell(x, y, visorPixel);
-					break;
-
-				case 'A':
-					sprite.SetCell(x, y, armorPixel);
-					break;
-
-				case 'a':
-					sprite.SetCell(x, y, armorLightPixel);
-					break;
-
-				case 'Y':
-					sprite.SetCell(x, y, yellowPixel);
-					break;
-
-				case 'L':
-					sprite.SetCell(x, y, legPixel);
-					break;
-
-				case 'B':
-					sprite.SetCell(x, y, bootPixel);
-					break;
-
-				case '.':
-				default:
-					// 투명 처리
-					break;
-				}
-			}
-		}
-
-		return sprite;
-	}
-
-
-}
-
 Player::Player()
 	: Character(Craft::Vector2F(120.0f, 50.0f), CharacterStats{100, 80.0f})
 {
@@ -100,6 +15,14 @@ Player::Player()
 
 	// 부위 Sprite 생성 및 Character에 등록
 	PlayerPartsGenerate();
+
+	// Visual이 실제 Sprite / 위치 / Sorting 설정
+	visual.Initialize(
+		GetPart(CharacterPartType::Head),
+		GetPart(CharacterPartType::Body),
+		GetPart(CharacterPartType::Legs),
+		GetPart(CharacterPartType::LeftHand),
+		GetPart(CharacterPartType::RightHand));
 }
 
 void Player::Tick(float deltaTime)
@@ -116,38 +39,67 @@ void Player::Tick(float deltaTime)
 	float yDirection = 0.0f;
 
 	// Left
-	if (Craft::Input::Get().GetKey('A'))
+	if (Input::Get().GetKey('A'))
 	{
 		xDirection = -1.0f;
 		isMoving = true;
 	}
 
 	// Right
-	if (Craft::Input::Get().GetKey('D'))
+	if (Input::Get().GetKey('D'))
 	{
 		xDirection = 1.0f;
 		isMoving = true;
 	}
 
 	// Up
-	if (Craft::Input::Get().GetKey('W'))
+	if (Input::Get().GetKey('W'))
 	{
 		yDirection = -1.0f;
 		isMoving = true;
 	}
 
 	// Down
-	if (Craft::Input::Get().GetKey('S'))
+	if (Input::Get().GetKey('S'))
 	{
 		yDirection = 1.0f;
 		isMoving = true;
+	}
+	// ================================== 테스트 ===================================
+	// 1 : 머리 파괴
+	if (Input::Get().GetKeyDown('1'))
+	{
+		ApplyPartDamage(
+			CharacterPartType::Head,
+			9999);
+	}
+	// 2 : 머리 복구
+	if (Input::Get().GetKeyDown('2'))
+	{
+		RestorePart(
+			CharacterPartType::Head);
 	}
 
 	// 이동 함수 호출
 	Move(xDirection, yDirection, deltaTime);
 
+	//이동이 끝난 현재 Player 위치를 기준 마우스가 좌/우 어디에 있는지 판단
+	UpdateFacingDirection();
+
+	// Player 이동 상태를 Visual Animation 상태로 전달
+	if (isMoving)
+	{
+		visual.SetAnimationState(PlayerAnimationState::Walk);
+	}
+	else
+	{
+		visual.SetAnimationState(PlayerAnimationState::Idle);
+	}
+
+	visual.Tick(deltaTime);
+
 	// ESC로 프로그램 종료 테스트
-	if (Craft::Input::Get().GetKeyDown(VK_ESCAPE))
+	if (Input::Get().GetKeyDown(VK_ESCAPE))
 	{
 		QuitGame();
 	}
@@ -155,141 +107,10 @@ void Player::Tick(float deltaTime)
 
 void Player::PlayerPartsGenerate()
 {
-	// ----------------------------------------------------
-	// 색상
-	// ----------------------------------------------------
-
-	const Craft::ColorRGB outlineColor(20, 22, 20);     // 외곽선
-	const Craft::ColorRGB helmetColor(45, 49, 45);      // 헬멧
-	const Craft::ColorRGB helmetLightColor(68, 72, 65); // 헬멧 밝은 면
-	const Craft::ColorRGB visorColor(40, 85, 95);       // 어두운 바이저
-
-	const Craft::ColorRGB armorColor(58, 62, 57);       // 방탄복
-	const Craft::ColorRGB armorLightColor(82, 86, 78);  // 방탄복 밝은 면
-
-	const Craft::ColorRGB yellowColor(220, 185, 45);    // 노란 포인트
-
-	const Craft::ColorRGB legColor(45, 48, 44);         // 다리
-	const Craft::ColorRGB bootColor(26, 28, 26);        // 부츠
-
-	// Cell 변환
-	const Craft::Cell outlinePixel = MakePixel(outlineColor);
-
-	const Craft::Cell helmetPixel = MakePixel(helmetColor);
-
-	const Craft::Cell helmetLightPixel = MakePixel(helmetLightColor);
-
-	const Craft::Cell visorPixel = MakePixel(visorColor);
-
-	const Craft::Cell armorPixel = MakePixel(armorColor);
-
-	const Craft::Cell armorLightPixel = MakePixel(armorLightColor);
-
-	const Craft::Cell yellowPixel = MakePixel(yellowColor);
-
-	const Craft::Cell legPixel = MakePixel(legColor);
-
-	const Craft::Cell bootPixel = MakePixel(bootColor);
-
-	// ========================================================
-	// Head
-	//
-	// 크기: 9 x 7
-	// Character 기준 위치: (0, 0)
-	// ========================================================
-	const char* headPixels[7] =
-	{
-		"..OOOOOO.",
-		".OHHYHHYO",
-		"OHHhhhhhO",
-		"OHHVVVVVO",
-		"OHHHVVVVO",
-		"OHHHHYYHO",
-		"OHHHHHYHO"
-	};
-
-	// ========================================================
-	// Body
-	//
-	// 기존 Player Sprite의 7~12행.
-	//
-	// 양쪽 외곽선은 LeftHand / RightHand 쪽으로 분리했다.
-	// ========================================================
-	const char* bodyPixels[6] =
-	{
-		".OYYYYAO.",
-		".OAAAAAO.",
-		".OAaaaYO.",
-		".OAAAAAO.",
-		".OAAAAAO.",
-		".OYYYYYO."
-	};
-
-
-	// ========================================================
-	// Legs
-	//
-	// 기존 Player Sprite의 13~14행
-	// ========================================================
-	const char* legsPixels[2] =
-	{
-		".OL..OL..",
-		".BBB.BBB."
-	};
-
-	// Head
-	const Craft::PixelSprite headSprite =
-		MakePartSprite(
-			9,
-			7,
-			headPixels,
-			outlinePixel,
-			helmetPixel,
-			helmetLightPixel,
-			visorPixel,
-			armorPixel,
-			armorLightPixel,
-			yellowPixel,
-			legPixel,
-			bootPixel);
-
-
-	// Body
-	const Craft::PixelSprite bodySprite =
-		MakePartSprite(
-			9,
-			6,
-			bodyPixels,
-			outlinePixel,
-			helmetPixel,
-			helmetLightPixel,
-			visorPixel,
-			armorPixel,
-			armorLightPixel,
-			yellowPixel,
-			legPixel,
-			bootPixel);
-
-	// Legs
-	const Craft::PixelSprite legsSprite =
-		MakePartSprite(
-			9,
-			2,
-			legsPixels,
-			outlinePixel,
-			helmetPixel,
-			helmetLightPixel,
-			visorPixel,
-			armorPixel,
-			armorLightPixel,
-			yellowPixel,
-			legPixel,
-			bootPixel);
-
 	AddPart(
 		std::make_unique<CharacterPart>(
 			CharacterPartType::Legs,
-			legsSprite,
+			Craft::PixelSprite(),
 			Craft::Vector2(0, 13),
 			0,
 			true,
@@ -299,7 +120,7 @@ void Player::PlayerPartsGenerate()
 	AddPart(
 		std::make_unique<CharacterPart>(
 			CharacterPartType::Body,
-			bodySprite,
+			Craft::PixelSprite(),
 			Craft::Vector2(0, 7),
 			1,
 			false,
@@ -309,12 +130,32 @@ void Player::PlayerPartsGenerate()
 	AddPart(
 		std::make_unique<CharacterPart>(
 			CharacterPartType::Head,
-			headSprite,
+			Craft::PixelSprite(),
 			Craft::Vector2(0, 0),
-			3,
+			2,
 			true,
 			false),
 		50);
+	
+	AddPart(
+		std::make_unique<CharacterPart>(
+			CharacterPartType::LeftHand,
+			Craft::PixelSprite(),
+			Craft::Vector2(2, 9),
+			3,
+			true,
+			false),
+		30);
+
+	AddPart(
+		std::make_unique<CharacterPart>(
+			CharacterPartType::RightHand,
+			Craft::PixelSprite(),
+			Craft::Vector2(7, 8),
+			3,
+			true,
+			false),
+		30);
 }
 
 void Player::Move(float xDirection, float yDirection, float deltaTime)
@@ -352,4 +193,42 @@ void Player::Move(float xDirection, float yDirection, float deltaTime)
 
 	// 위치 업데이트
 	SetPosition(position);
+}
+
+void Player::UpdateFacingDirection()
+{
+	// Player의 월드 중심 위치 계산
+	const Craft::Vector2F playerPosition = GetPosition();
+
+	const Craft::Vector2F playerCenterPosition(
+		playerPosition.x + static_cast<float>(GetWidth()) * 0.5f,
+		playerPosition.y + static_cast<float>(GetHeight()) * 0.5f);
+
+	// 월드 좌표 → 화면 좌표 | Player 화면 좌표로 변환
+	const Craft::Vector2 playerScreenPosition = Renderer::Get().GetCamera().WorldToScreen(playerCenterPosition);
+
+	// 현재 마우스 화면 좌표
+	const Craft::Vector2& mousePosition = Input::Get().GetMousePosition();
+
+	// 변경 전 방향 저장
+	const bool previousFacing = isFacingRight;
+
+	// 좌 / 우 판정 [x가 정확히 같으면 기존 방향 유지]
+	if (mousePosition.x > playerScreenPosition.x)
+	{
+		isFacingRight = true;
+	}
+	else if (mousePosition.x < playerScreenPosition.x)
+	{
+		isFacingRight = false;
+	}
+
+	// 방향 변화가 없다면 건너뛰기
+	if (previousFacing == isFacingRight)
+	{
+		return;
+	}
+
+	// 실제 해당 부위 방향 갱신
+	visual.SetFacingRight(isFacingRight);
 }

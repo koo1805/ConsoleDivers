@@ -182,5 +182,5 @@ void Character::DrawPart(const CharacterPart& part)
 // 캐릭터 부위 타입 -> array index
 size_t Character::ToPartIndex(CharacterPartType type)
 {
-	return size_t();
+	return static_cast<size_t>(type);
 }

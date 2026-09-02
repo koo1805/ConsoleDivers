@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Core/Core.h>
 #include <Actor/Actor.h>
 #include <Actor/Character/CharacterPart.h>
 #include <Actor/Character/CharacterStats.h>
@@ -16,7 +15,7 @@ struct CharacterPartHealth
     int currentHealth = 0;
 };
 
-class CRAFT_API Character : public Craft::Actor
+class Character : public Craft::Actor
 {
     TYPE_DECLARATIONS(Character, Actor)
 

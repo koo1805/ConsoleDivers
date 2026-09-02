@@ -101,6 +101,7 @@
     <ClCompile Include="Actor\Character\Character.cpp" />
     <ClCompile Include="Actor\Character\CharacterPart.cpp" />
     <ClCompile Include="Actor\Player\Player.cpp" />
+    <ClCompile Include="Actor\Player\Sprite\PlayerVisual.cpp" />
     <ClCompile Include="Debugging\DebugManager.cpp" />
     <ClCompile Include="Level\GameLevel.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -111,7 +112,9 @@
     <ClInclude Include="Actor\Character\Character.h" />
     <ClInclude Include="Actor\Character\CharacterPart.h" />
     <ClInclude Include="Actor\Character\CharacterStats.h" />
+    <ClInclude Include="Actor\Player\Data\PlayerVisualData.h" />
     <ClInclude Include="Actor\Player\Player.h" />
+    <ClInclude Include="Actor\Player\Sprite\PlayerVisual.h" />
     <ClInclude Include="Debugging\DebugManager.h" />
     <ClInclude Include="Level\GameLevel.h" />
     <ClInclude Include="Test\TestActor.h" />
