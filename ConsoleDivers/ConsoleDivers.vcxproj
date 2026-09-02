@@ -99,6 +99,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Actor\Player\Player.cpp" />
+    <ClCompile Include="Debug\DebugManager.cpp" />
     <ClCompile Include="Level\GameLevel.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Test\TestActor.cpp" />
@@ -106,6 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor\Player\Player.h" />
+    <ClInclude Include="Debug\DebugManager.h" />
     <ClInclude Include="Level\GameLevel.h" />
     <ClInclude Include="Test\TestActor.h" />
     <ClInclude Include="Test\TestBG.h" />

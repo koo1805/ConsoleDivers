@@ -3,8 +3,9 @@
 #include <Render/Renderer.h>
 #include <Camera/Camera.h>
 #include <Camera/Controller/CameraController.h>
-
+#include <Debug/DebugManager.h>
 #include <Actor/Player/Player.h>
+
 #include <Test/TestBG.h>
 
 #include <Windows.h>
@@ -24,6 +25,8 @@ void GameLevel::OnInitialized()
 	cameraController->SetTargetPosition(player->GetPosition());
 
 	cameraController->SnapToTarget();
+	// 디버그 매니저에 카메라 정보를 연결
+	DebugManager::Get().SetCameraController(cameraController.get());
 }
 
 
@@ -60,4 +63,15 @@ void GameLevel::Tick(float deltaTime)
 	cameraController->SetTargetPosition(player->GetPosition());
 	cameraController->SetTargetMoving(player->IsMoving());
 	cameraController->Tick(deltaTime);
+
+	// 디버그 상태 변경시 업데이트
+	DebugManager::Get().Tick(deltaTime);
+}
+
+void GameLevel::Draw()
+{
+	super::Draw();
+
+	// 디버그 그리기 명령 생성
+	DebugManager::Get().Draw();
 }

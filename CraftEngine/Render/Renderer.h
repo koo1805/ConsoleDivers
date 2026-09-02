@@ -47,6 +47,9 @@ namespace Craft
 
 			// 그리기 정렬 순서 - 값이 크면 우선순위가 높음
 			int sortingOrder = -1;
+
+			// 화면 좌표를 그대로 사용할지 여부	false - 월드 좌표 | true - 화면 좌표
+			bool screenSpace = false;
 		};
 
 	public:
@@ -73,6 +76,12 @@ namespace Craft
 		
 		// PixelSprite
 		void Submit(
+			const PixelSprite& sprite,
+			const Vector2& position,
+			int sortingOrder = 0
+		);
+
+		void SubmitScreenSpace(
 			const PixelSprite& sprite,
 			const Vector2& position,
 			int sortingOrder = 0

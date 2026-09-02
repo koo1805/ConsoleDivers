@@ -23,12 +23,14 @@ public:
 	// 매 프레임 업데이트
 	virtual void Tick(float deltaTime) override;
 
+	// 화면 그리기
+	virtual void Draw() override;
+
 private:
 	std::shared_ptr<Player> player;
 	// test용
 	std::shared_ptr<Craft::TestBG> testBGActor;
 
 	std::shared_ptr<Craft::CameraController> cameraController;
-
 };
 

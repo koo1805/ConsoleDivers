@@ -117,6 +117,7 @@ xcopy ..\Config\* $(OutDir)..\Config\ /e /y /i</Command>
     <ClCompile Include="Physics\CollisionSystem.cpp" />
     <ClCompile Include="Render\ANSIEncoder.cpp" />
     <ClCompile Include="Render\ConsoleContext.cpp" />
+    <ClCompile Include="Render\Debug\DebugRenderer.cpp" />
     <ClCompile Include="Render\Renderer.cpp" />
     <ClCompile Include="Render\ScreenBuffer.cpp" />
     <ClCompile Include="Render\Sprite\PixelSprite.cpp" />
@@ -140,6 +141,7 @@ xcopy ..\Config\* $(OutDir)..\Config\ /e /y /i</Command>
     <ClInclude Include="Render\ANSIEncoder.h" />
     <ClInclude Include="Render\Cell.h" />
     <ClInclude Include="Render\ConsoleContext.h" />
+    <ClInclude Include="Render\Debug\DebugRenderer.h" />
     <ClInclude Include="Render\Renderer.h" />
     <ClInclude Include="Render\ScreenBuffer.h" />
     <ClInclude Include="Render\Sprite\PixelSprite.h" />

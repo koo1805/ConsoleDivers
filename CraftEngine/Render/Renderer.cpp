@@ -275,6 +275,20 @@ namespace Craft
 		renderQueue.emplace_back(command);
 	}
 
+	void Renderer::SubmitScreenSpace(const PixelSprite& sprite, const Vector2& position, int sortingOrder)
+	{
+		// 렌더 명령 생성 및 값 설정
+		RenderCommand command;
+		command.renderType = RenderType::PixelSprite;
+		command.pixelSprite = &sprite;
+		command.position = position;
+		command.sortingOrder = sortingOrder;
+		command.screenSpace = true;
+
+		// 렌더 큐에 명령 추가
+		renderQueue.emplace_back(command);
+	}
+
 	void Renderer::Draw()
 	{
 #if CRAFT_RENDERER_DEBUG
@@ -728,7 +742,9 @@ namespace Craft
 		const PixelSprite& sprite = *command.pixelSprite;
 
 		// 월드 좌표를 화면 좌표로 변환
-		const Vector2 screenPosition = camera->WorldToScreen(Vector2F(static_cast<float>(command.position.x), static_cast<float>(command.position.y)));
+		const Vector2 screenPosition =
+			command.screenSpace
+				? command.position : camera->WorldToScreen(Vector2F(static_cast<float>(command.position.x), static_cast<float>(command.position.y)));
 
 		// 검사 변수
 		const int spriteLeft = screenPosition.x;

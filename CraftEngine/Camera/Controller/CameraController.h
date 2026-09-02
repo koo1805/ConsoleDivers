@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <Core/Core.h>
 #include <Math/Vector2F.h>
@@ -43,6 +43,9 @@ namespace Craft
 		// Getter
 		inline Vector2F GetTargetPosition() const { return targetPosition; }
 		inline float GetFollowSpeed() const { return followSpeed; }
+		inline bool IsDeadZoneActive() const { return followState == CameraFollowState::DeadZone; }
+		inline float GetDeadZoneWidth() const { return deadZoneWidth; }
+		inline float GetDeadZoneHeight() const { return deadZoneHeight; }
 
 	private:
 		// 카메라 상태 업데이트 함수
