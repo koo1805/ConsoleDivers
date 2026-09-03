@@ -22,6 +22,12 @@ public:
     // 바라보는 방향 설정
     void SetFacingRight(bool facingRight);
 
+    // 다이브시 머리 방향
+    void SetHeadFacingRight(bool facingRight);
+
+    // 다이브시 머리제외 나머지 방향
+    void SetOtherFacingRight(bool facingRight);
+
     inline bool IsFacingRight() const { return isFacingRight; }
 
     // 해당 애니메이션 프레임 수
@@ -43,8 +49,9 @@ private:
     void GenerateIdleAnimation();
 
     void GenerateWalkAnimation();
+
+    void GenerateDiveAnimation();
     // 추후
-    void GenerateAimAnimation();
     void GenerateFireAnimation();
 
 private:
@@ -71,8 +78,13 @@ private:
 
     // true - 오른쪽
     bool isFacingRight = true;
+    bool isHeadFacingRight = true;
+    bool isOtherFacingRight = true;
+
+    int currentVisualWidth = playerWidth;
 
     static constexpr int playerWidth = 9;
+    static constexpr int diveWidth = 15;
 
 private:
     // Player Visual Data
@@ -90,5 +102,12 @@ private:
     CharacterPartAnimation walkLegs;
     CharacterPartAnimation walkLeftHand;
     CharacterPartAnimation walkRightHand;
+
+    // Dive
+    CharacterPartAnimation diveHead;
+    CharacterPartAnimation diveBody;
+    CharacterPartAnimation diveLegs;
+    CharacterPartAnimation diveLeftHand;
+    CharacterPartAnimation diveRightHand;
 };
 

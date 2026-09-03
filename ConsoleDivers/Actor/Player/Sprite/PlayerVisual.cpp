@@ -120,12 +120,31 @@ void PlayerVisual::SetFacingRight(bool facingRight)
 		return;
 	}
 
-	if (isFacingRight == facingRight)
+	isFacingRight = facingRight;
+	isHeadFacingRight = facingRight;
+	isOtherFacingRight = facingRight;
+}
+
+void PlayerVisual::SetHeadFacingRight(bool facingRight)
+{
+	if (!isInitialized)
 	{
 		return;
 	}
 
-	isFacingRight = facingRight;
+	// 머리 방향만 갱신
+	isHeadFacingRight = facingRight;
+}
+
+void PlayerVisual::SetOtherFacingRight(bool facingRight)
+{
+	if (!isInitialized)
+	{
+		return;
+	}
+
+	// 머리 제외 나머지 방향만 갱신
+	isOtherFacingRight = facingRight;
 }
 
 int PlayerVisual::GetAnimationFrameCount(PlayerAnimationState state) const
@@ -139,10 +158,11 @@ int PlayerVisual::GetAnimationFrameCount(PlayerAnimationState state) const
 	case PlayerAnimationState::Walk:
 		return static_cast<int>(walkLegs.frames.size());
 
-	case PlayerAnimationState::Aim:
-		break;
+	case PlayerAnimationState::Dive:
+		return static_cast<int>(diveBody.frames.size());
+
 	case PlayerAnimationState::Fire:
-		break;
+		return 0;
 	default:
 		return 0;
 		
@@ -160,10 +180,11 @@ float PlayerVisual::GetAnimationFrameDuration(PlayerAnimationState state) const
 	case PlayerAnimationState::Walk:
 		return walkLegs.frameDuration;
 
-	case PlayerAnimationState::Aim:
-		break;
+	case PlayerAnimationState::Dive:
+		return diveBody.frameDuration;
+
 	case PlayerAnimationState::Fire:
-		break;
+		return 0.0f;
 	default:
 		return 0.0f;
 	}
@@ -180,10 +201,11 @@ bool PlayerVisual::IsAnimationLooping(PlayerAnimationState state) const
 	case PlayerAnimationState::Walk:
 		return walkLegs.loop;
 
-	case PlayerAnimationState::Aim:
-		break;
+	case PlayerAnimationState::Dive:
+		return diveBody.loop;
+
 	case PlayerAnimationState::Fire:
-		break;
+		return false;
 	default:
 		return false;
 	}
@@ -210,6 +232,8 @@ void PlayerVisual::ApplyAnimationFrame(PlayerAnimationState state, int frameInde
 		legsAnimation = &idleLegs;
 		leftHandAnimation = &idleLeftHand;
 		rightHandAnimation = &idleRightHand;
+
+		currentVisualWidth = playerWidth;
 		break;
 
 	case PlayerAnimationState::Walk:
@@ -218,10 +242,20 @@ void PlayerVisual::ApplyAnimationFrame(PlayerAnimationState state, int frameInde
 		legsAnimation = &walkLegs;
 		leftHandAnimation = &walkLeftHand;
 		rightHandAnimation = &walkRightHand;
+
+		currentVisualWidth = playerWidth;
 		break;
 
-	case PlayerAnimationState::Aim:
+	case PlayerAnimationState::Dive:
+		headAnimation = &diveHead;
+		bodyAnimation = &diveBody;
+		legsAnimation = &diveLegs;
+		leftHandAnimation = &diveLeftHand;
+		rightHandAnimation = &diveRightHand;
+
+		currentVisualWidth = diveWidth;
 		break;
+
 	case PlayerAnimationState::Fire:
 		break;
 	default:
@@ -246,6 +280,9 @@ void PlayerVisual::GenerateVisualData()
 
 	// 걷기 상태
 	GenerateWalkAnimation();
+
+	// 다이브 상태
+	GenerateDiveAnimation();
 }
 
 void PlayerVisual::GenerateIdleAnimation()
@@ -596,8 +633,201 @@ void PlayerVisual::GenerateWalkAnimation()
 	walkRightHand.loop = true;
 }
 
-void PlayerVisual::GenerateAimAnimation()
-{}
+void PlayerVisual::GenerateDiveAnimation()
+{
+	const Craft::ColorRGB outlineColor(20, 22, 20);     // 외곽선
+	const Craft::ColorRGB helmetColor(45, 49, 45);      // 헬멧
+	const Craft::ColorRGB helmetLightColor(68, 72, 65); // 헬멧 밝은 면
+	const Craft::ColorRGB visorColor(40, 85, 95);       // 어두운 바이저
+
+	const Craft::ColorRGB armorColor(58, 62, 57);       // 방탄복
+	const Craft::ColorRGB armorLightColor(82, 86, 78);  // 방탄복 밝은 면
+
+	const Craft::ColorRGB yellowColor(220, 185, 45);    // 노란 포인트
+
+	const Craft::ColorRGB handColor(120, 125, 120);		// 손
+
+	const Craft::ColorRGB legColor(45, 48, 44);         // 다리
+	const Craft::ColorRGB bootColor(26, 28, 26);        // 부츠
+
+	// Cell 변환
+	const Craft::Cell outlinePixel = MakePixel(outlineColor);
+	const Craft::Cell helmetPixel = MakePixel(helmetColor);
+	const Craft::Cell helmetLightPixel = MakePixel(helmetLightColor);
+	const Craft::Cell visorPixel = MakePixel(visorColor);
+	const Craft::Cell armorPixel = MakePixel(armorColor);
+	const Craft::Cell armorLightPixel = MakePixel(armorLightColor);
+	const Craft::Cell yellowPixel = MakePixel(yellowColor);
+	const Craft::Cell handPixel = MakePixel(handColor);
+	const Craft::Cell legPixel = MakePixel(legColor);
+	const Craft::Cell bootPixel = MakePixel(bootColor);
+
+	// ========================================================
+	// Head
+	//
+	// 크기: 9 x 7
+	// ========================================================
+	const char* headPixels[7] =
+	{
+		"..OOOOOO.",
+		".OHHYHHYO",
+		"OHHhhhhhO",
+		"OHHVVVVVO",
+		"OHHHVVVVO",
+		"OHHHHYYHO",
+		"OHHHHHYHO"
+	};
+
+	// ========================================================
+	// Body
+	// 양쪽 외곽선은 LeftHand / RightHand 쪽으로 분리했다.
+	// ========================================================
+	const char* bodyPixels[5] =
+	{
+		"OOOOOOOOO",
+		"AAAaaaAAY",
+		"AAAaaAAAY",
+		"AAAaYYYAY",
+		"OOOOOOOOO"
+	};
+
+	// ========================================================
+	// LeftHand / RightHand
+	//
+	// 2 x 2 크기의 밝은 회색 손 Sprite
+	// ========================================================
+	const char* handPixels[2] =
+	{
+		"PP",
+		"PP"
+	};
+
+	// ========================================================
+	// Legs
+	// ========================================================
+	const char* legsPixels[3] =
+	{
+		"BBBO",
+		"BBLL",
+		".BB."
+	};
+
+	// 머리
+	const Craft::PixelSprite headSprite =
+		MakePartSprite(
+			9,
+			7,
+			headPixels,
+			outlinePixel,
+			helmetPixel,
+			helmetLightPixel,
+			visorPixel,
+			armorPixel,
+			armorLightPixel,
+			yellowPixel,
+			legPixel,
+			bootPixel,
+			handPixel);
+
+
+	// 몸통
+	const Craft::PixelSprite bodySprite =
+		MakePartSprite(
+			9,
+			5,
+			bodyPixels,
+			outlinePixel,
+			helmetPixel,
+			helmetLightPixel,
+			visorPixel,
+			armorPixel,
+			armorLightPixel,
+			yellowPixel,
+			legPixel,
+			bootPixel,
+			handPixel);
+
+	// 다리
+	const Craft::PixelSprite legsSprite =
+		MakePartSprite(
+			4,
+			3,
+			legsPixels,
+			outlinePixel,
+			helmetPixel,
+			helmetLightPixel,
+			visorPixel,
+			armorPixel,
+			armorLightPixel,
+			yellowPixel,
+			legPixel,
+			bootPixel,
+			handPixel);
+
+	// 손
+	const Craft::PixelSprite handSprite =
+		MakePartSprite(
+			2,
+			2,
+			handPixels,
+			outlinePixel,
+			helmetPixel,
+			helmetLightPixel,
+			visorPixel,
+			armorPixel,
+			armorLightPixel,
+			yellowPixel,
+			legPixel,
+			bootPixel,
+			handPixel);
+
+	diveHead.frames.push_back(
+		CharacterPartFrame{
+			headSprite,
+			Craft::Vector2(9, 1),
+			2
+		});
+
+	diveBody.frames.push_back(
+		CharacterPartFrame{
+			bodySprite,
+			Craft::Vector2(4, 3),
+			1
+		});
+
+	diveLegs.frames.push_back(
+		CharacterPartFrame{
+			legsSprite,
+			Craft::Vector2(0, 3),
+			0
+		});
+
+	diveLeftHand.frames.push_back(
+		CharacterPartFrame{
+			handSprite,
+			Craft::Vector2(8, 4),
+			3
+		});
+
+	diveRightHand.frames.push_back(
+		CharacterPartFrame{
+			handSprite,
+			Craft::Vector2(11, 5),
+			3
+		});
+
+	diveHead.frameDuration = 0.35f;
+	diveBody.frameDuration = 0.35f;
+	diveLegs.frameDuration = 0.35f;
+	diveLeftHand.frameDuration = 0.35f;
+	diveRightHand.frameDuration = 0.35f;
+
+	diveHead.loop = false;
+	diveBody.loop = false;
+	diveLegs.loop = false;
+	diveLeftHand.loop = false;
+	diveRightHand.loop = false;
+}
 
 void PlayerVisual::GenerateFireAnimation()
 {}
@@ -621,67 +851,70 @@ void PlayerVisual::ApplyPartFrame(CharacterPart* part, const CharacterPartAnimat
 
 void PlayerVisual::ApplyFacing()
 {
-	// 오른쪽이면 원본 데이터를 그대로 사용
+	/* 오른쪽이면 원본 데이터를 그대로 사용
 	if (isFacingRight)
 	{
 		return;
-	}
+	}		//*/
 
 	// Head / Body / Legs Sprite 좌우 반전
-	if (head)
+	if (!isHeadFacingRight && head)
 	{
 		head->SetSprite(FlipHorizontal(head->GetSprite()));
 
 		Craft::Vector2 position = head->GetLocalPosition();
 
-		position.x = playerWidth - head->GetSprite().GetWidth() - position.x;
+		position.x = currentVisualWidth - head->GetSprite().GetWidth() - position.x;
 
 		head->SetLocalPosition(position);
 	}
 
-	if (body)
+	if (!isOtherFacingRight)
 	{
-		body->SetSprite(FlipHorizontal(body->GetSprite()));
+		if (body)
+		{
+			body->SetSprite(FlipHorizontal(body->GetSprite()));
 
-		Craft::Vector2 position = body->GetLocalPosition();
+			Craft::Vector2 position = body->GetLocalPosition();
 
-		position.x = playerWidth - body->GetSprite().GetWidth() - position.x;
+			position.x = currentVisualWidth - body->GetSprite().GetWidth() - position.x;
 
-		body->SetLocalPosition(position);
-	}
+			body->SetLocalPosition(position);
+		}
 
-	if (legs)
-	{
-		legs->SetSprite(FlipHorizontal(legs->GetSprite()));
+		if (legs)
+		{
+			legs->SetSprite(FlipHorizontal(legs->GetSprite()));
 
-		Craft::Vector2 position = legs->GetLocalPosition();
+			Craft::Vector2 position = legs->GetLocalPosition();
 
-		position.x = playerWidth - legs->GetSprite().GetWidth() - position.x;
+			position.x = currentVisualWidth - legs->GetSprite().GetWidth() - position.x;
 
-		legs->SetLocalPosition(position);
-	}
+			legs->SetLocalPosition(position);
+		}
 
-	// 손 위치 좌우 반전
-	if (leftHand)
-	{
-		leftHand->SetSprite(FlipHorizontal(leftHand->GetSprite()));
+		// 손 위치 좌우 반전
+		if (leftHand)
+		{
+			leftHand->SetSprite(FlipHorizontal(leftHand->GetSprite()));
 
-		Craft::Vector2 position = leftHand->GetLocalPosition();
+			Craft::Vector2 position = leftHand->GetLocalPosition();
 
-		position.x = playerWidth - leftHand->GetSprite().GetWidth() - position.x;
+			position.x = currentVisualWidth - leftHand->GetSprite().GetWidth() - position.x;
 
-		leftHand->SetLocalPosition(position);
-	}
+			leftHand->SetLocalPosition(position);
+		}
 
-	if (rightHand)
-	{
-		rightHand->SetSprite(FlipHorizontal(rightHand->GetSprite()));
+		if (rightHand)
+		{
+			rightHand->SetSprite(FlipHorizontal(rightHand->GetSprite()));
 
-		Craft::Vector2 position = rightHand->GetLocalPosition();
+			Craft::Vector2 position = rightHand->GetLocalPosition();
 
-		position.x = playerWidth - rightHand->GetSprite().GetWidth() - position.x;
+			position.x = currentVisualWidth - rightHand->GetSprite().GetWidth() - position.x;
 
-		rightHand->SetLocalPosition(position);
+			rightHand->SetLocalPosition(position);
+		}
 	}
 }
 

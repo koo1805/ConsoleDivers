@@ -10,7 +10,7 @@ enum class PlayerAnimationState
 {
     Idle,
     Walk,
-    Aim,
+    Dive,
     Fire
 };
 
