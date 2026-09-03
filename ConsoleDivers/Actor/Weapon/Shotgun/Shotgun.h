@@ -12,7 +12,7 @@ public:
 	virtual ~Shotgun() override = default;
 
 public:
-	virtual void Fire() override;
+	virtual void StartFire(const Craft::Vector2F& aimDirection) override;
 
 protected:
 	// 방향 바뀔 때 로직
@@ -40,7 +40,7 @@ private:
 	static constexpr float projectileLifeTime = 1.5f;
 
 	// 탄 퍼짐 정도
-	static constexpr float spreadStep = 0.15f;
+	static constexpr float spreadAngle = 0.08f;
 
 };
 

@@ -3,6 +3,7 @@
 #include <Camera/Camera.h>
 #include <Input/Input.h>
 #include <Actor/Weapon/WeaponBase.h>
+#include <Actor/Weapon/Shotgun/Shotgun.h>
 #include <Level/Level.h>
 
 #include <memory>
@@ -39,20 +40,45 @@ void Player::EquipWeapon(const std::shared_ptr<WeaponBase>& weapon)
 		return;
 	}
 
-	// 이미 같은 무기를 장착하고 있다면 다시 처리 X
-	if (equippedWeapon.lock() == weapon)
+	// 주무기
+	if (weapon->GetSlotType() == WeaponSlotType::Primary)
 	{
-		return;
-	}
+		std::shared_ptr<WeaponBase> oldWeapon = primaryWeapon.lock();
 
-	// 무기를 가지고 있다면 기존의 무기를 내려 놓음
-	if (HasWeapon())
+		// 같은 Weapon이면 다시 처리할 필요 없음
+		if (oldWeapon == weapon)
+		{
+			return;
+		}
+
+		// 기존 주무기가 있다면 교체
+		if (oldWeapon)
+		{
+			oldWeapon->Drop(GetPosition());
+		}
+
+		// 슬롯 등록
+		primaryWeapon = weapon;
+	}
+	// 지원 무기
+	else
 	{
-		DropWeapon();
-	}
+		std::shared_ptr<WeaponBase> oldWeapon = supportWeapon.lock();
 
-	// 현재 장착된 무기 약참조
-	equippedWeapon = weapon;
+		if (oldWeapon == weapon)
+		{
+			return;
+		}
+
+		if (oldWeapon)
+		{
+			// 지원 무기는 자유롭게 드롭가능
+			oldWeapon->Drop(GetPosition());
+		}
+
+		// 슬롯 등록
+		supportWeapon = weapon;
+	}
 
 	// Actor가 enable_shared_from_this를 가지므로 플레이어 자신을 Weapon에게 넘길수 있음
 	weapon->Equip(shared_from_this());
@@ -62,19 +88,25 @@ void Player::EquipWeapon(const std::shared_ptr<WeaponBase>& weapon)
 
 	// 초기 Attach 동기화
 	weapon->SetAttachPosition(GetWeaponAttachPosition());
+
+	// 선택 상태 변경
+	ChangeWeaponSlot(weapon->GetSlotType());
 }
 
 void Player::DropWeapon()
 {
 	// 현재 장착된 무기 확인
-	std::shared_ptr<WeaponBase> weapon = equippedWeapon.lock();
+	std::shared_ptr<WeaponBase> weapon = GetEquippedWeapon();
 
 	// 장착된 무기가 없다면 건너뛰기
 	if (!weapon)
 	{
-		// weak_ptr 초기화
-		equippedWeapon.reset();
+		return;
+	}
 
+	// 주무기 수동 Drop 금지
+	if (weapon->GetSlotType() == WeaponSlotType::Primary)
+	{
 		return;
 	}
 
@@ -84,19 +116,68 @@ void Player::DropWeapon()
 	// 무기 드랍
 	weapon->Drop(dropPosition);
 
-	// 드랍후 연결해제
-	equippedWeapon.reset();
+	// Player 슬롯에서도 제거
+	supportWeapon.reset();
+
+	// 지원무기를 버리면 자동으로 주무기로 전환
+	ChangeWeaponSlot(WeaponSlotType::Primary);
+}
+
+void Player::ChangeWeaponSlot(WeaponSlotType newSlot)
+{
+	// 변경할 슬롯에 실제 Weapon이 있는지 확인
+	if (newSlot == WeaponSlotType::Primary)
+	{
+		if (primaryWeapon.expired())
+		{
+			return;
+		}
+	}
+	else
+	{
+		if (supportWeapon.expired())
+		{
+			return;
+		}
+	}
+
+	// 기존 Weapon 숨김
+	if (std::shared_ptr<WeaponBase> currentWeapon = GetEquippedWeapon())
+	{
+		// 사용 중이던 차지 / 연사 상태 취소
+		currentWeapon->CancelFire();
+
+		currentWeapon->SetSelected(false);
+	}
+
+	// 슬롯 변경
+	activeWeaponSlot = newSlot;
+
+	// 새 Weapon 활성화
+	if (std::shared_ptr<WeaponBase> newWeapon = GetEquippedWeapon())
+	{
+		newWeapon->SetSelected(true);
+
+		newWeapon->SetAttachPosition(GetWeaponAttachPosition());
+
+		newWeapon->SetFacingRight(isFacingRight);
+	}
 }
 
 std::shared_ptr<WeaponBase> Player::GetEquippedWeapon() const
 {
-	return equippedWeapon.lock();
+	if (activeWeaponSlot == WeaponSlotType::Primary)
+	{
+		return primaryWeapon.lock();
+	}
+
+	return supportWeapon.lock();
 }
 
 bool Player::HasWeapon() const
 {
 	// weak_ptr이 만료되지 않았다면 장착한 무기가 존재한다는 것
-	return !equippedWeapon.expired();
+	return !primaryWeapon.expired() || !supportWeapon.expired();
 }
 
 Craft::Vector2F Player::GetWeaponAttachPosition() const
@@ -115,6 +196,24 @@ Craft::Vector2F Player::GetWeaponAttachPosition() const
 
 	// 로컬 위치 -> 월드 위치
 	return Craft::Vector2F(position.x + static_cast<float>(handLocalPosition.x), position.y + static_cast<float>(handLocalPosition.y));
+}
+
+void Player::BeginPlay()
+{
+	super::BeginPlay();
+
+	std::shared_ptr<Craft::Level> level = GetOwner();
+
+	if (!level)
+	{
+		return;
+	}
+
+	// 기본 주무기 생성
+	std::shared_ptr<Shotgun> shotgun = level->SpawnActor<Shotgun>(GetPosition());
+
+	// 생성 직후 주무기 슬롯에 등록
+	EquipWeapon(shotgun);
 }
 
 void Player::Tick(float deltaTime)
@@ -176,31 +275,62 @@ void Player::Tick(float deltaTime)
 		DropWeapon();
 	}
 
+	const Craft::Vector2F aimDirection = GetAimDirection();
+	std::shared_ptr<WeaponBase> activeWeapon = GetEquippedWeapon();
+
+	// 발사
+	if (activeWeapon)
+	{
+		// 마우스를 처음 누른 순간
+		if (Input::Get().GetKeyDown(VK_LBUTTON))
+		{
+			activeWeapon->StartFire(aimDirection);
+		}
+
+		// 누르고 있는 동안
+		if (Input::Get().GetKey(VK_LBUTTON))
+		{
+			activeWeapon->UpdateFire(deltaTime, aimDirection);
+		}
+
+		// 마우스를 놓은 순간
+		if (Input::Get().GetKeyUp(VK_LBUTTON))
+		{
+			activeWeapon->ReleaseFire(aimDirection);
+		}
+
+		// R : 장전
+		if (Input::Get().GetKeyDown('R'))
+		{
+			activeWeapon->StartReload();
+		}
+	}
+
+	// 1 : 주무기
+	if (Input::Get().GetKeyDown('1') && activeWeaponSlot != WeaponSlotType::Primary)
+	{
+		ChangeWeaponSlot(WeaponSlotType::Primary);
+	}
+
+	// 지원무기
+	if (Input::Get().GetKeyDown('2') && activeWeaponSlot != WeaponSlotType::Support)
+	{
+		ChangeWeaponSlot(WeaponSlotType::Support);
+	}
 
 	// ================================== 테스트 ===================================
 	// 1 : 머리 파괴
-	if (Input::Get().GetKeyDown('1'))
+	if (Input::Get().GetKeyDown('9'))
 	{
 		ApplyPartDamage(
 			CharacterPartType::Head,
 			9999);
 	}
 	// 2 : 머리 복구
-	if (Input::Get().GetKeyDown('2'))
+	if (Input::Get().GetKeyDown('0'))
 	{
 		RestorePart(
 			CharacterPartType::Head);
-	}
-	// f 발사
-	if (Input::Get().GetKeyDown('F'))
-	{
-		std::shared_ptr<WeaponBase> weapon = GetEquippedWeapon();
-
-		// Weapon이 존재하면 실제 파생 클래스의 Fire 호출
-		if (weapon)
-		{
-			weapon->Fire();
-		}
 	}
 
 	if (isDiving)
@@ -310,12 +440,21 @@ void Player::Move(float xDirection, float yDirection, float deltaTime)
 		yDirection *= diagonalScale;
 	}
 
+	float weaponMoveMultiplier = 1.0f;
+
+	if (std::shared_ptr<WeaponBase> weapon = GetEquippedWeapon())
+	{
+		weaponMoveMultiplier = weapon->GetMoveSpeedMultiplier();
+	}
+
+	const float finalMoveSpeed = GetCharacterStats().moveSpeed * weaponMoveMultiplier;
+
 	// x위치 업데이트
 	// 이동 처리 -> 이동 방향과 빠르기를 적용해서 새로운 위치를 구하는 것
 	// 이동 방향(direction) / 빠르기(moveSpeed) | 시간
 	// 동속도 운동: 이동 거리 = 기존의 위치 + 이동 방향 x 빠르기 x 시간
-	position.x += xDirection * GetCharacterStats().moveSpeed * deltaTime;
-	position.y += yDirection * GetCharacterStats().moveSpeed * deltaTime;
+	position.x += xDirection * finalMoveSpeed * deltaTime;
+	position.y += yDirection * finalMoveSpeed * deltaTime;
 
 	//* 화면 왼쪽 벗어나지 않도록 처리
 	if (position.x < 0)
@@ -565,4 +704,40 @@ void Player::TryPickupWeapon()
 	}
 
 	EquipWeapon(nearestWeapon);
+}
+
+Craft::Vector2F Player::GetAimDirection() const
+{
+	// 현재 마우스는 화면 기준 좌표
+	const Craft::Vector2 mouseScreen = Input::Get().GetMousePosition();
+
+	// Camera Position = 화면 좌상단의 월드 좌표
+	const Craft::Vector2F cameraPosition = Renderer::Get().GetCamera().GetPosition();
+
+	// Screen -> World
+	const Craft::Vector2F mouseWorld(
+		cameraPosition.x + static_cast<float>(mouseScreen.x),
+		cameraPosition.y + static_cast<float>(mouseScreen.y)
+	);
+
+	// Player 중심
+	const Craft::Vector2F playerCenter(
+		position.x + static_cast<float>(GetWidth()) * 0.5f,
+		position.y + static_cast<float>(GetHeight()) * 0.5f
+	);
+
+	Craft::Vector2F direction = mouseWorld - playerCenter;
+
+	// 정규화
+	const float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+
+	if (length <= 0.000001f)
+	{
+		return Craft::Vector2F::Zero;
+	}
+
+	direction.x /= length;
+	direction.y /= length;
+
+	return direction;
 }

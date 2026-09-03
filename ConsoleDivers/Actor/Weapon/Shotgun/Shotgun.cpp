@@ -1,8 +1,9 @@
 ﻿#include "Shotgun.h"
 #include <Level/Level.h>
-#include <Render/Cell.h>
-#include <Math/ColorRGB.h>
-#include <Actor/Projectile/ProjectileBase.h>
+#include <Actor/Projectile/PelletProjectile/PelletProjectile.h>
+
+#include <cmath>
+
 
 using namespace Craft;
 
@@ -21,7 +22,7 @@ namespace
 }
 
 Shotgun::Shotgun(const Craft::Vector2F& position)
-	: WeaponBase(position)
+	: WeaponBase(WeaponSlotType::Primary, WeaponAmmoData{8, 8, 6, 6, 1.8f}, position)
 {
     rightPixel = CreateShotgunSprite();
 
@@ -29,50 +30,51 @@ Shotgun::Shotgun(const Craft::Vector2F& position)
 
 	ChangePixelSprite(rightPixel);
 
-    gridOffset = Craft::Vector2F(-2.0f, -2.0f);
+    gripOffset = Craft::Vector2F(-2.0f, -2.0f);
 }
 
-void Shotgun::Fire()
+void Shotgun::StartFire(const Craft::Vector2F& aimDirection)
 {
     std::shared_ptr<Craft::Level> level = GetOwner();
-
-    // 예외 처리
     if (!level)
     {
         return;
     }
 
-    std::shared_ptr<Craft::Actor> weaponOwner = GetWeaponOwner();
-
-    if (!weaponOwner)
+    std::shared_ptr<Craft::Actor> owner = GetWeaponOwner();
+    if (!owner)
     {
         return;
     }
 
-    // 발사 시작 위치
-    const Craft::Vector2F spawnPosition = GetPosition();
+    // 탄약 확인 + 한 발 소비
+    if (!ConsumeAmmo())
+    {
+        return;
+    }
 
-    // x방향
-    const float xDirection = IsFacingRight() ? 1.0f : -1.0f;
+    // 중심 발사 방향
+    const float angle = std::atan2(aimDirection.y, aimDirection.x);
 
-    // 탄 퍼짐
     const int centerIndex = pelletCount / 2;
 
     for (int index = 0; index < pelletCount; ++index)
     {
         const int spreadIndex = index - centerIndex;
 
-        // Y 방향에 퍼짐 적용
-        const float yDirection = static_cast<float>(spreadIndex) * spreadStep;
+        const float pelletAngle = angle + static_cast<float>(spreadIndex) * spreadAngle;
 
-        const Craft::Vector2F direction(xDirection, yDirection);
+        const Craft::Vector2F direction(std::cos(pelletAngle), std::sin(pelletAngle));
 
-        // Projectile 생성
-        std::shared_ptr<ProjectileBase> projectile
-            = level->SpawnActor<ProjectileBase>(spawnPosition, direction, projectileSpeed, projectileLifeTime, false);
+        std::shared_ptr<PelletProjectile> projectile = level->SpawnActor<PelletProjectile>(
+                GetPosition(),
+                direction,
+                projectileSpeed,
+                projectileLifeTime,
+                false
+            );
 
-        // 발사자 등록
-        projectile->SetProjectileOwner(weaponOwner);
+        projectile->SetProjectileOwner(owner);
     }
 }
 
@@ -83,7 +85,7 @@ void Shotgun::OnFacingChanged()
         // 오른쪽
         ChangePixelSprite(rightPixel);
 
-        gridOffset = Craft::Vector2F(-2.0f, -2.0f);
+        gripOffset = Craft::Vector2F(-2.0f, -2.0f);
 
         return;
     }
@@ -91,7 +93,7 @@ void Shotgun::OnFacingChanged()
     // 왼쪽
     ChangePixelSprite(leftPixel);
 
-    gridOffset = Craft::Vector2F(-8.0f, -2.0f);
+    gripOffset = Craft::Vector2F(-8.0f, -2.0f);
 }
 
 Craft::PixelSprite Shotgun::CreateShotgunSprite() const

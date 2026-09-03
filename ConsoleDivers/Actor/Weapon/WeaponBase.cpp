@@ -2,8 +2,10 @@
 
 using namespace Craft;
 
-WeaponBase::WeaponBase(const Craft::Vector2F& position)
-	: Actor(position)
+WeaponBase::WeaponBase(WeaponSlotType slotType, const WeaponAmmoData& ammoData, const Craft::Vector2F& position)
+	: Actor(position),
+	slotType(slotType),
+	ammoData(ammoData)
 {
 	weaponState = WeaponState::Dropped;
 
@@ -13,6 +15,9 @@ WeaponBase::WeaponBase(const Craft::Vector2F& position)
 void WeaponBase::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
+
+	// 장전 진행
+	UpdateReload(deltaTime);
 
 	// Drop -> 위치 갱신 필요 없음
 	if (weaponState == WeaponState::Dropped)
@@ -32,12 +37,74 @@ void WeaponBase::Tick(float deltaTime)
 	}
 
 	// 플레이어 왼손 위치 전달
-	SetPosition(Craft::Vector2F(attachPosition.x + gridOffset.x, attachPosition.y + gridOffset.y));
+	SetPosition(Craft::Vector2F(attachPosition.x + gripOffset.x, attachPosition.y + gripOffset.y));
 }
 
-void WeaponBase::Fire()
+void WeaponBase::Draw()
 {
+	// 현재 선택한 Weapon 하나만 손에 출력
+	if (weaponState == WeaponState::Equipped && !isSelected)
+	{
+		return;
+	}
 
+	super::Draw();
+}
+
+void WeaponBase::StartFire(const Craft::Vector2F& aimDirection)
+{}
+
+void WeaponBase::UpdateFire(float deltaTime, const Craft::Vector2F & aimDirection)
+{}
+
+void WeaponBase::ReleaseFire(const Craft::Vector2F & aimDirection)
+{}
+
+// Reload
+void WeaponBase::StartReload()
+{
+	// 이미 장전 중
+	if (runtimeData.isReloading)
+	{
+		return;
+	}
+
+	// 현재 탄창이 이미 가득 참
+	if (ammoData.currentAmmo >= ammoData.magazineCapacity)
+	{
+		return;
+	}
+
+	// 예비 탄창 없음
+	if (ammoData.reserveMagazineCount <= 0)
+	{
+		return;
+	}
+
+	runtimeData.isReloading = true;
+	runtimeData.reloadTimer = 0.0f;
+}
+
+void WeaponBase::UpdateReload(float deltaTime)
+{
+	if (!runtimeData.isReloading)
+	{
+		return;
+	}
+
+	runtimeData.reloadTimer += deltaTime;
+
+	if (runtimeData.reloadTimer < ammoData.reloadDuration)
+	{
+		return;
+	}
+
+	ammoData.currentAmmo = ammoData.magazineCapacity;
+
+	--ammoData.reserveMagazineCount;
+
+	runtimeData.isReloading = false;
+	runtimeData.reloadTimer = 0.0f;
 }
 
 void WeaponBase::Equip(const std::shared_ptr<Craft::Actor>& newOwner)
@@ -57,6 +124,16 @@ void WeaponBase::Equip(const std::shared_ptr<Craft::Actor>& newOwner)
 
 void WeaponBase::Drop(const Craft::Vector2F& dropPosition)
 {
+	// 진행 중인 무기 행동 종료
+	CancelFire();
+
+	// 장전도 취소
+	runtimeData.isReloading = false;
+	runtimeData.reloadTimer = 0.0f;
+
+	// 손에서 선택 해제
+	isSelected = false;
+
 	// Owner 연결 해제
 	weaponOwner.reset();
 
@@ -90,4 +167,33 @@ void WeaponBase::SetFacingRight(bool newFacingRight)
 
 void WeaponBase::OnFacingChanged()
 {
+}
+
+void WeaponBase::CancelFire()
+{
+
+}
+
+bool WeaponBase::CanFire() const
+{
+	// 장전 중에는 발사 불가
+	if (runtimeData.isReloading)
+	{
+		return false;
+	}
+	// 현재 탄창에 탄이 하나 이상 있어야 발사 가능
+	return ammoData.currentAmmo > 0;
+}
+
+bool WeaponBase::ConsumeAmmo()
+{
+	// 발사 가능한 상태가 아니라면 탄약을 소비하지 않음
+	if (!CanFire())
+	{
+		return false;
+	}
+
+	--ammoData.currentAmmo;
+
+	return true;
 }

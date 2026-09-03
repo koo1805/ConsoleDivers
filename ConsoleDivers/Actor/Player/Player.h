@@ -3,6 +3,7 @@
 #include <Actor/Character/Character.h>
 #include <Actor/Player/Sprite/PlayerVisual.h>
 #include <Actor/Player/Animation/PlayerAnimator.h>
+#include <Actor/Weapon/Data/WeaponData.h>
 
 #include <memory>
 
@@ -34,16 +35,31 @@ public:
 	// 무기 드랍
 	void DropWeapon();
 
+	// 무기 슬롯 변경
+	void ChangeWeaponSlot(WeaponSlotType newSlot);
+
+	// 주무기 반환
+	inline std::shared_ptr<WeaponBase> GetPrimaryWeapon() const { return primaryWeapon.lock(); }
+
+	// 지원 무기 반환
+	inline std::shared_ptr<WeaponBase> GetSupportWeapon() const { return supportWeapon.lock(); }
+
 	// 장착중인 무기 반환
 	std::shared_ptr<WeaponBase> GetEquippedWeapon() const;
 
 	// 무기 장착 상태 확인
 	bool HasWeapon() const;
 
+	inline bool HasPrimaryWeapon() const { return !primaryWeapon.expired(); }
+
+	inline bool HasSupportWeapon() const { return !supportWeapon.expired(); }
+
 	// 무기를 장착할 위치 반환
 	Craft::Vector2F GetWeaponAttachPosition() const;
 
 private:
+	virtual void BeginPlay() override;
+
 	virtual void Tick(float deltaTime) override;
 
 	void PlayerPartsGenerate();
@@ -64,6 +80,8 @@ private:
 
 	// 주변에 떨어진 무기를 찾아 장착 시도
 	void TryPickupWeapon();
+
+	Craft::Vector2F GetAimDirection() const;
 
 private:
 	bool isMoving = false;
@@ -86,8 +104,14 @@ private:
 	// 다이브 이동 방향
 	Craft::Vector2F diveDirection = Craft::Vector2F::Zero;
 
-	// 현재 장착된 무기 참조
-	std::weak_ptr<WeaponBase> equippedWeapon;
+	// 현재 보유 중인 주무기
+	std::weak_ptr<WeaponBase> primaryWeapon;
+
+	// 현재 보유 중인 지원무기
+	std::weak_ptr<WeaponBase> supportWeapon;
+
+	// 현재 손에 들고 있는 슬롯
+	WeaponSlotType activeWeaponSlot = WeaponSlotType::Primary;
 
 	PlayerVisual visual;
 
@@ -102,10 +126,10 @@ private:
 	static constexpr float diagonalScale = 0.7071f;
 
 	// 다이브 이동 속도
-	static constexpr float diveSpeed = 0.0f;
+	static constexpr float diveSpeed = 100.0f;
 
 	// 다이브 지속 시간
-	static constexpr float diveDuration = 3.0f;
+	static constexpr float diveDuration = 0.35f;
 
 	// 다이브 시작후 무적 유지 시간
 	static constexpr float diveInvincibleDuration = 0.25f;

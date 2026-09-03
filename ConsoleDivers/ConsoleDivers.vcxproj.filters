@@ -54,6 +54,12 @@
     <ClCompile Include="Actor\Projectile\ProjectileBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Actor\Projectile\PelletProjectile\PelletProjectile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor\Weapon\ArcThrower\ArcThrower.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Level\GameLevel.h">
@@ -96,6 +102,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Actor\Projectile\ProjectileBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Projectile\PelletProjectile\PelletProjectile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Weapon\Data\WeaponData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Weapon\ArcThrower\ArcThrower.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
