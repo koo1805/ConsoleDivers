@@ -1,6 +1,8 @@
 ﻿#include "Shotgun.h"
+#include <Level/Level.h>
 #include <Render/Cell.h>
 #include <Math/ColorRGB.h>
+#include <Actor/Projectile/ProjectileBase.h>
 
 using namespace Craft;
 
@@ -32,6 +34,46 @@ Shotgun::Shotgun(const Craft::Vector2F& position)
 
 void Shotgun::Fire()
 {
+    std::shared_ptr<Craft::Level> level = GetOwner();
+
+    // 예외 처리
+    if (!level)
+    {
+        return;
+    }
+
+    std::shared_ptr<Craft::Actor> weaponOwner = GetWeaponOwner();
+
+    if (!weaponOwner)
+    {
+        return;
+    }
+
+    // 발사 시작 위치
+    const Craft::Vector2F spawnPosition = GetPosition();
+
+    // x방향
+    const float xDirection = IsFacingRight() ? 1.0f : -1.0f;
+
+    // 탄 퍼짐
+    const int centerIndex = pelletCount / 2;
+
+    for (int index = 0; index < pelletCount; ++index)
+    {
+        const int spreadIndex = index - centerIndex;
+
+        // Y 방향에 퍼짐 적용
+        const float yDirection = static_cast<float>(spreadIndex) * spreadStep;
+
+        const Craft::Vector2F direction(xDirection, yDirection);
+
+        // Projectile 생성
+        std::shared_ptr<ProjectileBase> projectile
+            = level->SpawnActor<ProjectileBase>(spawnPosition, direction, projectileSpeed, projectileLifeTime, false);
+
+        // 발사자 등록
+        projectile->SetProjectileOwner(weaponOwner);
+    }
 }
 
 void Shotgun::OnFacingChanged()

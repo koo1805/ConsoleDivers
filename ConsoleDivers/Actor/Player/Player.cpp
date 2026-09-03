@@ -176,6 +176,7 @@ void Player::Tick(float deltaTime)
 		DropWeapon();
 	}
 
+
 	// ================================== 테스트 ===================================
 	// 1 : 머리 파괴
 	if (Input::Get().GetKeyDown('1'))
@@ -189,6 +190,17 @@ void Player::Tick(float deltaTime)
 	{
 		RestorePart(
 			CharacterPartType::Head);
+	}
+	// f 발사
+	if (Input::Get().GetKeyDown('F'))
+	{
+		std::shared_ptr<WeaponBase> weapon = GetEquippedWeapon();
+
+		// Weapon이 존재하면 실제 파생 클래스의 Fire 호출
+		if (weapon)
+		{
+			weapon->Fire();
+		}
 	}
 
 	if (isDiving)
