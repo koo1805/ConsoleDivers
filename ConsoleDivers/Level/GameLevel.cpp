@@ -6,6 +6,8 @@
 #include <Debugging/DebugManager.h>
 #include <Actor/Player/Player.h>
 
+#include <Actor/Weapon/Shotgun/Shotgun.h>
+
 #include <Test/TestBG.h>
 
 #include <Windows.h>
@@ -20,6 +22,8 @@ void GameLevel::OnInitialized()
 	Craft::Renderer::Get().GetCamera().SetCameraClampSize(Craft::TestBG::GetWorldSize());
 
 	player = SpawnActor<Player>();
+
+	SpawnActor<Shotgun>(Craft::Vector2F(player->GetPosition().x + 12.0f, player->GetPosition().y));
 
 	cameraController = std::make_shared<Craft::CameraController>(Craft::Renderer::Get().GetCamera());
 	cameraController->SetTargetPosition(player->GetPosition());

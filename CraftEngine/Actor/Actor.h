@@ -22,7 +22,7 @@ namespace Craft
 	};
 
 	// 가상 공간에 배치될 모든 액터의 기본 클래스
-	class CRAFT_API Actor : public CraftObject
+	class CRAFT_API Actor : public CraftObject, public std::enable_shared_from_this<Actor>
 	{
 		// 매크로 지정할 때 끝에 세미콜론 넣지 않도록 주의
 		TYPE_DECLARATIONS(Actor, CraftObject)

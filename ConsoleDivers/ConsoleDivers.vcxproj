@@ -103,6 +103,8 @@
     <ClCompile Include="Actor\Player\Animation\PlayerAnimator.cpp" />
     <ClCompile Include="Actor\Player\Player.cpp" />
     <ClCompile Include="Actor\Player\Sprite\PlayerVisual.cpp" />
+    <ClCompile Include="Actor\Weapon\Shotgun\Shotgun.cpp" />
+    <ClCompile Include="Actor\Weapon\WeaponBase.cpp" />
     <ClCompile Include="Debugging\DebugManager.cpp" />
     <ClCompile Include="Level\GameLevel.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -117,6 +119,8 @@
     <ClInclude Include="Actor\Player\Data\PlayerVisualData.h" />
     <ClInclude Include="Actor\Player\Player.h" />
     <ClInclude Include="Actor\Player\Sprite\PlayerVisual.h" />
+    <ClInclude Include="Actor\Weapon\Shotgun\Shotgun.h" />
+    <ClInclude Include="Actor\Weapon\WeaponBase.h" />
     <ClInclude Include="Debugging\DebugManager.h" />
     <ClInclude Include="Level\GameLevel.h" />
     <ClInclude Include="Test\TestActor.h" />

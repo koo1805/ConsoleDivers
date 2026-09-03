@@ -2,6 +2,8 @@
 #include <Render/Renderer.h>
 #include <Camera/Camera.h>
 #include <Input/Input.h>
+#include <Actor/Weapon/WeaponBase.h>
+#include <Level/Level.h>
 
 #include <memory>
 #include <cmath>
@@ -27,6 +29,68 @@ Player::Player()
 
 	// animator 초기화
 	animator.Initialized(&visual);
+}
+
+void Player::EquipWeapon(const std::shared_ptr<WeaponBase>& weapon)
+{
+	// 예외 처리
+	if (!weapon)
+	{
+		return;
+	}
+
+	// 이미 같은 무기를 장착하고 있다면 다시 처리 X
+	if (equippedWeapon.lock() == weapon)
+	{
+		return;
+	}
+
+	// 무기를 가지고 있다면 기존의 무기를 내려 놓음
+	if (HasWeapon())
+	{
+		DropWeapon();
+	}
+
+	// 현재 장착된 무기 약참조
+	equippedWeapon = weapon;
+
+	// Actor가 enable_shared_from_this를 가지므로 플레이어 자신을 Weapon에게 넘길수 있음
+	weapon->Equip(shared_from_this());
+}
+
+void Player::DropWeapon()
+{
+	// 현재 장착된 무기 확인
+	std::shared_ptr<WeaponBase> weapon = equippedWeapon.lock();
+
+	// 장착된 무기가 없다면 건너뛰기
+	if (!weapon)
+	{
+		// weak_ptr 초기화
+		equippedWeapon.reset();
+
+		return;
+	}
+
+	// 드랍 위치
+	const Craft::Vector2F dropPosition = GetPosition();
+
+	// 무기 드랍
+	weapon->Drop(dropPosition);
+
+	// 드랍후 연결해제
+	equippedWeapon.reset();
+}
+
+std::shared_ptr<WeaponBase> Player::GetEquippedWeapon() const
+{
+	return equippedWeapon.lock();
+}
+
+bool Player::HasWeapon() const
+{
+	// weak_ptr이 만료되지 않았다면 장착한 무기가 존재한다는 것
+	return !equippedWeapon.expired();
 }
 
 void Player::Tick(float deltaTime)
@@ -74,6 +138,18 @@ void Player::Tick(float deltaTime)
 	if (Input::Get().GetKeyDown(VK_SPACE))
 	{
 		StartDive(xDirection, yDirection);
+	}
+	
+	// 장비 집기
+	if (Input::Get().GetKeyDown('E'))
+	{
+		TryPickupWeapon();
+	}
+
+	// 장비 드랍
+	if (Input::Get().GetKeyDown('X'))
+	{
+		DropWeapon();
 	}
 
 	// ================================== 테스트 ===================================
@@ -380,4 +456,68 @@ void Player::EndDive()
 	invincibleTimer = 0.0f;
 
 	diveDirection = Craft::Vector2F::Zero;
+}
+
+void Player::TryPickupWeapon()
+{
+	// 플레이어를 소유하고 있는 Level
+	std::shared_ptr<Craft::Level> level = GetOwner();
+
+	// 예외 처리
+	if (!level)
+	{
+		return;
+	}
+
+	// 레벨에서 파생클래스들 찾기
+	const std::vector<std::shared_ptr<WeaponBase>> weapons = level->FindActors<WeaponBase>();
+
+	// 가장 가까운 무기
+	std::shared_ptr<WeaponBase> nearestWeapon = nullptr;
+
+	float nearestDistanceSquared = weaponPickupRange * weaponPickupRange;
+
+	// 플레이어 현재 위치
+	const Craft::Vector2F playerPosition = GetPosition();
+
+	// 가장 가까운 무기 찾기
+	for (const std::shared_ptr<WeaponBase>& weapon : weapons)
+	{
+		if (!weapon)
+		{
+			continue;
+		}
+
+		// 이미 장착된 무기 제외
+		if (!weapon->IsDropped())
+		{
+			continue;
+		}
+
+		const Craft::Vector2F weaponPosition = weapon->GetPosition();
+
+		// 플레이어와의 거리
+		const float deltaX = weaponPosition.x - playerPosition.x;
+		const float deltaY = weaponPosition.y - playerPosition.y;
+
+		const float distanceSquared = deltaX * deltaX + deltaY * deltaY;
+
+		// Pickup 범위 밖이면 제외
+		if (distanceSquared > nearestDistanceSquared)
+		{
+			continue;
+		}
+
+		// 현재까지 가장 가까운 무기로 갱신
+		nearestDistanceSquared = distanceSquared;
+		nearestWeapon = weapon;
+	}
+
+	// 무기 장착
+	if (!nearestWeapon)
+	{
+		return;
+	}
+
+	EquipWeapon(nearestWeapon);
 }

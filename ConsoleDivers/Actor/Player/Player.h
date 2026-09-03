@@ -4,6 +4,11 @@
 #include <Actor/Player/Sprite/PlayerVisual.h>
 #include <Actor/Player/Animation/PlayerAnimator.h>
 
+#include <memory>
+
+// 전방 선언
+class WeaponBase;
+
 class Player : public Character
 {
 	TYPE_DECLARATIONS(Player, Character)
@@ -23,6 +28,18 @@ public:
 	// 현재 무적인지 확인
 	inline bool IsInvincible() const { return isInvincible; }
 
+	// 무기 장착
+	void EquipWeapon(const std::shared_ptr<WeaponBase>& weapon);
+
+	// 무기 드랍
+	void DropWeapon();
+
+	// 장착중인 무기 반환
+	std::shared_ptr<WeaponBase> GetEquippedWeapon() const;
+
+	// 무기 장착 상태 확인
+	bool HasWeapon() const;
+
 private:
 	virtual void Tick(float deltaTime) override;
 
@@ -41,6 +58,9 @@ private:
 
 	// 다이브 종료
 	void EndDive();
+
+	// 주변에 떨어진 무기를 찾아 장착 시도
+	void TryPickupWeapon();
 
 private:
 	bool isMoving = false;
@@ -63,6 +83,9 @@ private:
 	// 다이브 이동 방향
 	Craft::Vector2F diveDirection = Craft::Vector2F::Zero;
 
+	// 현재 장착된 무기 참조
+	std::weak_ptr<WeaponBase> equippedWeapon;
+
 	PlayerVisual visual;
 
 	PlayerAnimator animator;
@@ -83,5 +106,8 @@ private:
 
 	// 다이브 시작후 무적 유지 시간
 	static constexpr float diveInvincibleDuration = 0.25f;
+
+	// Pickup 가능 거리
+	static constexpr float weaponPickupRange = 12.0f;
 };
 

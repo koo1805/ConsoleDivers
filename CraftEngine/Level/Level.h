@@ -76,6 +76,35 @@ namespace Craft
 			return nullptr;
 		}
 
+		// 같은 타입의 액터들을 모두 검색
+		template<typename T,
+			typename = std::enable_if_t<std::is_base_of<Actor, T>::value>>
+			std::vector<std::shared_ptr<T>> FindActors()
+		{
+			// 검색된 액터를 저장할 배열
+			std::vector<std::shared_ptr<T>> result;
+
+			// Level이 가지고 있는 모든 액터 확인
+			for (const auto& actor : actorList)
+			{
+				// T 타입으로 형변환 시도
+				// T 타입이 아닌 경우에는 null 반환
+				std::shared_ptr<T> targetActor
+					= std::dynamic_pointer_cast<T>(actor);
+
+				// 타입이 다르면 건너뜀
+				if (!targetActor)
+				{
+					continue;
+				}
+
+				// 찾은 액터 추가
+				result.emplace_back(targetActor);
+			}
+
+			return result;
+		}
+
 		// Getter
 		inline bool HasInitialized() const { return hasInitialized; }
 
