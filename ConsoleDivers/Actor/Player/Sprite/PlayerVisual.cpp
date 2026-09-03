@@ -108,8 +108,6 @@ void PlayerVisual::Initialize(
 	// sprite 데이터 생성
 	GenerateVisualData();
 
-	isFacingRight = true;
-
 	isInitialized = true;
 }
 
@@ -120,7 +118,6 @@ void PlayerVisual::SetFacingRight(bool facingRight)
 		return;
 	}
 
-	isFacingRight = facingRight;
 	isHeadFacingRight = facingRight;
 	isOtherFacingRight = facingRight;
 }
@@ -136,15 +133,9 @@ void PlayerVisual::SetHeadFacingRight(bool facingRight)
 	isHeadFacingRight = facingRight;
 }
 
-void PlayerVisual::SetOtherFacingRight(bool facingRight)
+void PlayerVisual::SetDiveDirection(const Craft::Vector2F& direction)
 {
-	if (!isInitialized)
-	{
-		return;
-	}
-
-	// 머리 제외 나머지 방향만 갱신
-	isOtherFacingRight = facingRight;
+	diveDirection = direction;
 }
 
 int PlayerVisual::GetAnimationFrameCount(PlayerAnimationState state) const
@@ -269,8 +260,15 @@ void PlayerVisual::ApplyAnimationFrame(PlayerAnimationState state, int frameInde
 	ApplyPartFrame(leftHand, leftHandAnimation, frameIndex);
 	ApplyPartFrame(rightHand, rightHandAnimation, frameIndex);
 
-	// 애니메이션 프레임 적용 뒤 방향 계산
-	ApplyFacing();
+	if (state == PlayerAnimationState::Dive)
+	{
+		ApplyDiveDirection();
+	}
+	else
+	{
+		// 애니메이션 프레임 적용 뒤 방향 계산
+		ApplyFacing();
+	}
 }
 
 void PlayerVisual::GenerateVisualData()
@@ -784,7 +782,7 @@ void PlayerVisual::GenerateDiveAnimation()
 	diveHead.frames.push_back(
 		CharacterPartFrame{
 			headSprite,
-			Craft::Vector2(9, 1),
+			Craft::Vector2(11, 1),
 			2
 		});
 
@@ -851,12 +849,6 @@ void PlayerVisual::ApplyPartFrame(CharacterPart* part, const CharacterPartAnimat
 
 void PlayerVisual::ApplyFacing()
 {
-	/* 오른쪽이면 원본 데이터를 그대로 사용
-	if (isFacingRight)
-	{
-		return;
-	}		//*/
-
 	// Head / Body / Legs Sprite 좌우 반전
 	if (!isHeadFacingRight && head)
 	{
@@ -915,6 +907,45 @@ void PlayerVisual::ApplyFacing()
 
 			rightHand->SetLocalPosition(position);
 		}
+	}
+}
+
+void PlayerVisual::ApplyDiveDirection()
+{
+	// 오른쪽
+	if (diveDirection.x >= 0.0f)
+	{
+		head->SetLocalPosition(Craft::Vector2(11, 1));
+		body->SetLocalPosition(Craft::Vector2(4, 3));
+		legs->SetLocalPosition(Craft::Vector2(0, 3));
+		leftHand->SetLocalPosition(Craft::Vector2(8, 4));
+		rightHand->SetLocalPosition(Craft::Vector2(11, 5));
+	}
+	// 왼쪽
+	else
+	{
+		head->SetLocalPosition(Craft::Vector2(0, 1));
+		body->SetLocalPosition(Craft::Vector2(7, 3));
+		legs->SetLocalPosition(Craft::Vector2(16, 3));
+		leftHand->SetLocalPosition(Craft::Vector2(7, 4));
+		rightHand->SetLocalPosition(Craft::Vector2(5, 5));
+	}
+
+	// 머리 시선 처리
+	ApplyDiveHeadDirection();
+}
+
+void PlayerVisual::ApplyDiveHeadDirection()
+{
+	if (!head)
+	{
+		return;
+	}
+
+	if (!isHeadFacingRight)
+	{
+		// 마우스가 왼쪽이면 왼쪽을 바라보게 함
+		head->SetSprite(FlipHorizontal(head->GetSprite()));
 	}
 }
 

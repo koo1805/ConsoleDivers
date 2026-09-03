@@ -76,10 +76,10 @@ private:
 	static constexpr float diagonalScale = 0.7071f;
 
 	// 다이브 이동 속도
-	static constexpr float diveSpeed = 180.0f;
+	static constexpr float diveSpeed = 0.0f;
 
 	// 다이브 지속 시간
-	static constexpr float diveDuration = 0.35f;
+	static constexpr float diveDuration = 3.0f;
 
 	// 다이브 시작후 무적 유지 시간
 	static constexpr float diveInvincibleDuration = 0.25f;

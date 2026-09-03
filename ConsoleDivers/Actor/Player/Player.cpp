@@ -299,15 +299,7 @@ void Player::StartDive(float xDirection, float yDirection)
 		diveDirection.y /= length;
 	}
 
-	// 몸통 방향 고정
-	if (diveDirection.x > 0.0f)
-	{
-		visual.SetOtherFacingRight(true);
-	}
-	else if (diveDirection.x < 0.0f)
-	{
-		visual.SetOtherFacingRight(false);
-	}
+	visual.SetDiveDirection(diveDirection);
 
 	isDiving = true;
 

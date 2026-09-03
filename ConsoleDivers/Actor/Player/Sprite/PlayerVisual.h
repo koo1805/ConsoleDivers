@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <Actor/Player/Data/PlayerVisualData.h>
+#include <Math/Vector2F.h>
 
 // 전방 선언
 class CharacterPart;
@@ -25,10 +26,8 @@ public:
     // 다이브시 머리 방향
     void SetHeadFacingRight(bool facingRight);
 
-    // 다이브시 머리제외 나머지 방향
-    void SetOtherFacingRight(bool facingRight);
-
-    inline bool IsFacingRight() const { return isFacingRight; }
+    // 다이브 시작시 방향 전달
+    void SetDiveDirection(const Craft::Vector2F& direction);
 
     // 해당 애니메이션 프레임 수
     int GetAnimationFrameCount(PlayerAnimationState state) const;
@@ -61,6 +60,12 @@ private:
     // 현재 방향에 따른 좌우 반전
     void ApplyFacing();
 
+    // 다이브 전용 방향 배치
+    void ApplyDiveDirection();
+
+    // 다이브시 머리 방향 배치
+    void ApplyDiveHeadDirection();
+
     // Sprite 좌우 반전
     Craft::PixelSprite FlipHorizontal(const Craft::PixelSprite& sprite) const;
 
@@ -77,14 +82,15 @@ private:
     bool isInitialized = false;
 
     // true - 오른쪽
-    bool isFacingRight = true;
     bool isHeadFacingRight = true;
     bool isOtherFacingRight = true;
 
     int currentVisualWidth = playerWidth;
 
     static constexpr int playerWidth = 9;
-    static constexpr int diveWidth = 15;
+    static constexpr int diveWidth = 20;
+
+    Craft::Vector2F diveDirection = Craft::Vector2F::Zero;
 
 private:
     // Player Visual Data
