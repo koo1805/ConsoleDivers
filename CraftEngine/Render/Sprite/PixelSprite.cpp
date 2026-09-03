@@ -1,4 +1,4 @@
-#include "PixelSprite.h"
+﻿#include "PixelSprite.h"
 
 namespace Craft
 {

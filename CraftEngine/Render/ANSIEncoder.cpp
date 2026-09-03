@@ -1,4 +1,4 @@
-#include "ANSIEncoder.h"
+﻿#include "ANSIEncoder.h"
 #include <Render/Cell.h>
 #include <charconv>
 

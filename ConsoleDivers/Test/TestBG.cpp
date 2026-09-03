@@ -1,4 +1,4 @@
-#include "TestBG.h"
+﻿#include "TestBG.h"
 #include <Render/Cell.h>
 #include <Render/Sprite/PixelSprite.h>
 #include <Math/ColorRGB.h>

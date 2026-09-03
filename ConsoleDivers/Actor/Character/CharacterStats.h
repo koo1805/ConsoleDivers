@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // 캐릭터 공통 스탯 관리
 struct CharacterStats

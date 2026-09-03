@@ -1,4 +1,4 @@
-#include "Vector2F.h"
+﻿#include "Vector2F.h"
 #include <cassert>
 
 namespace Craft

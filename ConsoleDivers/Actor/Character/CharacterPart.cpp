@@ -1,4 +1,4 @@
-#include "CharacterPart.h"
+﻿#include "CharacterPart.h"
 
 CharacterPart::CharacterPart(
 	CharacterPartType type,
