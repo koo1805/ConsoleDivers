@@ -1,4 +1,4 @@
-#include "PlayerVisual.h"
+﻿#include "PlayerVisual.h"
 #include <Actor/Character/CharacterPart.h>
 
 using namespace Craft;
@@ -97,6 +97,7 @@ void PlayerVisual::Initialize(
 	CharacterPart* leftHand,
 	CharacterPart* rightHand)
 {
+	// 플레이어 부위 연결
 	this->head = head;
 	this->body = body;
 	this->legs = legs;
@@ -104,29 +105,12 @@ void PlayerVisual::Initialize(
 	this->leftHand = leftHand;
 	this->rightHand = rightHand;
 
+	// sprite 데이터 생성
 	GenerateVisualData();
-
-	currentState = PlayerAnimationState::Idle;
-
-	currentFrame = 0;
-
-	frameTimer = 0.0f;
 
 	isFacingRight = true;
 
 	isInitialized = true;
-
-	ApplyCurrentFrame();
-}
-
-void PlayerVisual::Tick(float deltaTime)
-{
-	if (!isInitialized)
-	{
-		return;
-	}
-
-	UpdateAnimation(deltaTime);
 }
 
 void PlayerVisual::SetFacingRight(bool facingRight)
@@ -142,25 +126,117 @@ void PlayerVisual::SetFacingRight(bool facingRight)
 	}
 
 	isFacingRight = facingRight;
-
-	// 원본 프레임을 다시 적용한 뒤 현재 방향에 맞게 재계산
-	ApplyCurrentFrame();
 }
 
-void PlayerVisual::SetAnimationState(PlayerAnimationState state)
+int PlayerVisual::GetAnimationFrameCount(PlayerAnimationState state) const
 {
-	if (currentState == state)
+	// 각 상태에서 부위별 애니메이션 프레임이 가장 긴 애니메이션을 기준으로 함
+	switch (state)
+	{
+	case PlayerAnimationState::Idle:
+		return static_cast<int>(idleHead.frames.size());
+
+	case PlayerAnimationState::Walk:
+		return static_cast<int>(walkLegs.frames.size());
+
+	case PlayerAnimationState::Aim:
+		break;
+	case PlayerAnimationState::Fire:
+		break;
+	default:
+		return 0;
+		
+	}
+}
+
+float PlayerVisual::GetAnimationFrameDuration(PlayerAnimationState state) const
+{
+	// 각 상태에서 부위별 애니메이션 프레임이 가장 긴 애니메이션을 기준으로 함
+	switch (state)
+	{
+	case PlayerAnimationState::Idle:
+		return idleHead.frameDuration;
+
+	case PlayerAnimationState::Walk:
+		return walkLegs.frameDuration;
+
+	case PlayerAnimationState::Aim:
+		break;
+	case PlayerAnimationState::Fire:
+		break;
+	default:
+		return 0.0f;
+	}
+}
+
+bool PlayerVisual::IsAnimationLooping(PlayerAnimationState state) const
+{
+	// 각 상태에서 부위별 애니메이션 프레임이 가장 긴 애니메이션을 기준으로 함
+	switch (state)
+	{
+	case PlayerAnimationState::Idle:
+		return idleHead.loop;
+
+	case PlayerAnimationState::Walk:
+		return walkLegs.loop;
+
+	case PlayerAnimationState::Aim:
+		break;
+	case PlayerAnimationState::Fire:
+		break;
+	default:
+		return false;
+	}
+}
+
+void PlayerVisual::ApplyAnimationFrame(PlayerAnimationState state, int frameIndex)
+{
+	if (!isInitialized)
 	{
 		return;
 	}
 
-	currentState = state;
+	const CharacterPartAnimation* headAnimation = nullptr;
+	const CharacterPartAnimation* bodyAnimation = nullptr;
+	const CharacterPartAnimation* legsAnimation = nullptr;
+	const CharacterPartAnimation* leftHandAnimation = nullptr;
+	const CharacterPartAnimation* rightHandAnimation = nullptr;
 
-	currentFrame = 0;
+	switch (state)
+	{
+	case PlayerAnimationState::Idle:
+		headAnimation = &idleHead;
+		bodyAnimation = &idleBody;
+		legsAnimation = &idleLegs;
+		leftHandAnimation = &idleLeftHand;
+		rightHandAnimation = &idleRightHand;
+		break;
 
-	frameTimer = 0.0f;
+	case PlayerAnimationState::Walk:
+		headAnimation = &walkHead;
+		bodyAnimation = &walkBody;
+		legsAnimation = &walkLegs;
+		leftHandAnimation = &walkLeftHand;
+		rightHandAnimation = &walkRightHand;
+		break;
 
-	ApplyCurrentFrame();
+	case PlayerAnimationState::Aim:
+		break;
+	case PlayerAnimationState::Fire:
+		break;
+	default:
+		return;
+	}
+
+	// 각 부위에 애니메이션 프레임 적용
+	ApplyPartFrame(head, headAnimation, frameIndex);
+	ApplyPartFrame(body, bodyAnimation, frameIndex);
+	ApplyPartFrame(legs, legsAnimation, frameIndex);
+	ApplyPartFrame(leftHand, leftHandAnimation, frameIndex);
+	ApplyPartFrame(rightHand, rightHandAnimation, frameIndex);
+
+	// 애니메이션 프레임 적용 뒤 방향 계산
+	ApplyFacing();
 }
 
 void PlayerVisual::GenerateVisualData()
@@ -425,14 +501,14 @@ void PlayerVisual::GenerateWalkAnimation()
 	// Walk Legs Frame
 	const char* walkLegPixels1[2] =
 	{
-		".OL...OL.",
-		".BBB..BBB"
+		".OL...BBB",
+		".BBB....."
 	};
 
 	const char* walkLegPixels2[2] =
 	{
-		"..OL.OL..",
-		"..BBB.BBB"
+		".BBB..OL.",
+		"......BBB"
 	};
 
 	const Craft::PixelSprite walkLegSprite1 =
@@ -526,169 +602,21 @@ void PlayerVisual::GenerateAimAnimation()
 void PlayerVisual::GenerateFireAnimation()
 {}
 
-void PlayerVisual::UpdateAnimation(float deltaTime)
+void PlayerVisual::ApplyPartFrame(CharacterPart* part, const CharacterPartAnimation* animation, int frameIndex)
 {
-	CharacterPartAnimation* baseAnimation = nullptr;
-
-	switch (currentState)
-	{
-	case PlayerAnimationState::Idle:
-
-		baseAnimation = &idleHead;
-		break;
-
-
-	case PlayerAnimationState::Walk:
-
-		baseAnimation = &walkLegs;
-		break;
-
-	case PlayerAnimationState::Aim:
-	case PlayerAnimationState::Fire:
-	default:
-
-		return;
-	}
-
-	// 예외 처리
-	if (!baseAnimation || baseAnimation->frames.empty())
+	if (!part || !animation || animation->frames.empty())
 	{
 		return;
 	}
 
-	// 누적 시간 증가
-	frameTimer += deltaTime;
+	// 부위마다 프레임 개수가 달라도 사용할 수 있도록 처리
+	const int partFrameIndex = frameIndex % static_cast<int>(animation->frames.size());
 
-	// 아직 다음 프레임 시간이 아니라면 유지
-	if (frameTimer < baseAnimation->frameDuration)
-	{
-		return;
-	}
+	const CharacterPartFrame& frame = animation->frames[partFrameIndex];
 
-	// 프레임 시간이 초과된 만큼 제거
-	// frameTimer = 0 으로 바로 만드는 것보다 남은 시간을 유지하는 편이 프레임 드랍 상황에서
-	// 애니메이션 속도가 덜 흔들림
-	frameTimer -= baseAnimation->frameDuration;
-	++currentFrame;
-
-	// 마지막 프레임을 넘어가면 다시 첫 프레임으로 순환
-	if (currentFrame >= static_cast<int>(baseAnimation->frames.size()))
-	{
-		currentFrame = 0;
-	}
-
-	// 새 Frame 적용
-	ApplyCurrentFrame();
-}
-
-void PlayerVisual::ApplyCurrentFrame()
-{
-	if (!isInitialized)
-	{
-		return;
-	}
-
-	// 현재 상태에서 사용할 Animation 선택
-	CharacterPartAnimation* headAnimation = nullptr;
-	CharacterPartAnimation* bodyAnimation = nullptr;
-	CharacterPartAnimation* legsAnimation = nullptr;
-
-	CharacterPartAnimation* leftHandAnimation = nullptr;
-	CharacterPartAnimation* rightHandAnimation = nullptr;
-
-	switch (currentState)
-	{
-	case PlayerAnimationState::Idle:
-		headAnimation = &idleHead;
-
-		bodyAnimation = &idleBody;
-
-		legsAnimation = &idleLegs;
-
-		leftHandAnimation = &idleLeftHand;
-
-		rightHandAnimation = &idleRightHand;
-
-		break;
-
-	case PlayerAnimationState::Walk:
-		headAnimation =	&walkHead;
-
-		bodyAnimation = &walkBody;
-
-		legsAnimation = &walkLegs;
-
-		leftHandAnimation = &walkLeftHand;
-
-		rightHandAnimation = &walkRightHand;
-
-		break;
-
-	case PlayerAnimationState::Aim:
-	case PlayerAnimationState::Fire:
-	default:
-		return;
-	}
-
-	// 머리
-	if (head && headAnimation && !headAnimation->frames.empty())
-	{
-		// 부위마다 Frame 수가 다를 수 있기 때문에 현재 Frame을 해당 Animation 크기로 순환
-		const int frameIndex = currentFrame % static_cast<int>(headAnimation->frames.size());
-		const CharacterPartFrame& frame = headAnimation->frames[frameIndex];
-
-		head->SetSprite(frame.sprite);
-		head->SetLocalPosition(frame.localPosition);
-		head->SetSortingOffset(frame.sortingOffset);
-	}
-	
-	// 몸통
-	if (body && bodyAnimation && !bodyAnimation->frames.empty())
-	{
-		const int frameIndex = currentFrame % static_cast<int>(bodyAnimation->frames.size());
-		const CharacterPartFrame& frame = bodyAnimation->frames[frameIndex];
-
-		body->SetSprite(frame.sprite);
-		body->SetLocalPosition(frame.localPosition);
-		body->SetSortingOffset(frame.sortingOffset);
-	}
-
-	// 다리	
-	if (legs && legsAnimation && !legsAnimation->frames.empty())
-	{
-		const int frameIndex = currentFrame % static_cast<int>(legsAnimation->frames.size());
-		const CharacterPartFrame& frame = legsAnimation->frames[frameIndex];
-
-		legs->SetSprite(frame.sprite);
-		legs->SetLocalPosition(frame.localPosition);
-		legs->SetSortingOffset(frame.sortingOffset);
-	}
-
-	// 왼손	
-	if (leftHand && leftHandAnimation && !leftHandAnimation->frames.empty())
-	{
-		const int frameIndex = currentFrame % static_cast<int>(leftHandAnimation->frames.size());
-		const CharacterPartFrame& frame = leftHandAnimation->frames[frameIndex];
-
-		leftHand->SetSprite(frame.sprite);
-		leftHand->SetLocalPosition(frame.localPosition);
-		leftHand->SetSortingOffset(frame.sortingOffset);
-	}
-
-	// 오른손	
-	if (rightHand && rightHandAnimation && !rightHandAnimation->frames.empty())
-	{
-		const int frameIndex = currentFrame % static_cast<int>(rightHandAnimation->frames.size());
-		const CharacterPartFrame& frame = rightHandAnimation->frames[frameIndex];
-
-		rightHand->SetSprite(frame.sprite);
-		rightHand->SetLocalPosition(frame.localPosition);
-		rightHand->SetSortingOffset(frame.sortingOffset);
-	}
-
-	// 모든 Frame은 오른쪽 방향을 원본으로 저장
-	// Frame 적용이 끝난 뒤 현재 Player 방향에 따라 좌우 반전
-	ApplyFacing();
+	part->SetSprite(frame.sprite);
+	part->SetLocalPosition(frame.localPosition);
+	part->SetSortingOffset(frame.sortingOffset);
 }
 
 void PlayerVisual::ApplyFacing()
@@ -703,39 +631,57 @@ void PlayerVisual::ApplyFacing()
 	if (head)
 	{
 		head->SetSprite(FlipHorizontal(head->GetSprite()));
+
+		Craft::Vector2 position = head->GetLocalPosition();
+
+		position.x = playerWidth - head->GetSprite().GetWidth() - position.x;
+
+		head->SetLocalPosition(position);
 	}
 
 	if (body)
 	{
 		body->SetSprite(FlipHorizontal(body->GetSprite()));
+
+		Craft::Vector2 position = body->GetLocalPosition();
+
+		position.x = playerWidth - body->GetSprite().GetWidth() - position.x;
+
+		body->SetLocalPosition(position);
 	}
 
 	if (legs)
 	{
 		legs->SetSprite(FlipHorizontal(legs->GetSprite()));
+
+		Craft::Vector2 position = legs->GetLocalPosition();
+
+		position.x = playerWidth - legs->GetSprite().GetWidth() - position.x;
+
+		legs->SetLocalPosition(position);
 	}
 
 	// 손 위치 좌우 반전
 	if (leftHand)
 	{
+		leftHand->SetSprite(FlipHorizontal(leftHand->GetSprite()));
+
 		Craft::Vector2 position = leftHand->GetLocalPosition();
 
-		position.x = 9 - leftHand->GetSprite().GetWidth() - position.x;
+		position.x = playerWidth - leftHand->GetSprite().GetWidth() - position.x;
 
 		leftHand->SetLocalPosition(position);
-
-		leftHand->SetSortingOffset(3);
 	}
 
 	if (rightHand)
 	{
+		rightHand->SetSprite(FlipHorizontal(rightHand->GetSprite()));
+
 		Craft::Vector2 position = rightHand->GetLocalPosition();
 
-		position.x = 9 - rightHand->GetSprite().GetWidth() - position.x;
+		position.x = playerWidth - rightHand->GetSprite().GetWidth() - position.x;
 
 		rightHand->SetLocalPosition(position);
-
-		rightHand->SetSortingOffset(3);
 	}
 }
 

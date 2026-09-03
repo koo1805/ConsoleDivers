@@ -23,6 +23,9 @@ Player::Player()
 		GetPart(CharacterPartType::Legs),
 		GetPart(CharacterPartType::LeftHand),
 		GetPart(CharacterPartType::RightHand));
+
+	// animator 초기화
+	animator.Initialized(&visual);
 }
 
 void Player::Tick(float deltaTime)
@@ -89,14 +92,14 @@ void Player::Tick(float deltaTime)
 	// Player 이동 상태를 Visual Animation 상태로 전달
 	if (isMoving)
 	{
-		visual.SetAnimationState(PlayerAnimationState::Walk);
+		animator.SetAnimationState(PlayerAnimationState::Walk);
 	}
 	else
 	{
-		visual.SetAnimationState(PlayerAnimationState::Idle);
+		animator.SetAnimationState(PlayerAnimationState::Idle);
 	}
 
-	visual.Tick(deltaTime);
+	animator.Tick(deltaTime);
 
 	// ESC로 프로그램 종료 테스트
 	if (Input::Get().GetKeyDown(VK_ESCAPE))
@@ -231,4 +234,7 @@ void Player::UpdateFacingDirection()
 
 	// 실제 해당 부위 방향 갱신
 	visual.SetFacingRight(isFacingRight);
+
+	// 현재 애니메이션 프레임을 원본부터 다시 적용한 뒤 새 방향으로 좌우 반전
+	animator.RedrawCurrentFrame();
 }

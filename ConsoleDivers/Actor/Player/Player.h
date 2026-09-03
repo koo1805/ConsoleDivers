@@ -2,6 +2,7 @@
 
 #include <Actor/Character/Character.h>
 #include <Actor/Player/Sprite/PlayerVisual.h>
+#include <Actor/Player/Animation/PlayerAnimator.h>
 
 class Player : public Character
 {
@@ -33,6 +34,8 @@ private:
 	bool isFacingRight = true;
 
 	PlayerVisual visual;
+
+	PlayerAnimator animator;
 
 	// 기존 Player의 전체 크기 유지
 	// Character가 여러 Sprite로 분리되더라도 = 카메라 / 월드 Bounds 계산에서는 기존 9 x 15 크기로 동작

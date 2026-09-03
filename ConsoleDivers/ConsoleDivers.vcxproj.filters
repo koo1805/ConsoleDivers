@@ -42,6 +42,9 @@
     <ClCompile Include="Actor\Player\Sprite\PlayerVisual.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Actor\Player\Animation\PlayerAnimator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Level\GameLevel.h">
@@ -72,6 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Actor\Player\Sprite\PlayerVisual.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Player\Animation\PlayerAnimator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

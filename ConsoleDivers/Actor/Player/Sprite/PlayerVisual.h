@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <Actor/Player/Data/PlayerVisualData.h>
 
@@ -19,13 +19,22 @@ public:
         CharacterPart* leftHand,
         CharacterPart* rightHand);
 
-    void Tick(float deltaTime);
-
+    // 바라보는 방향 설정
     void SetFacingRight(bool facingRight);
 
-    void SetAnimationState(PlayerAnimationState state);
-
     inline bool IsFacingRight() const { return isFacingRight; }
+
+    // 해당 애니메이션 프레임 수
+    int GetAnimationFrameCount(PlayerAnimationState state) const;
+
+    // 해당 애니메이션의 프레임 유지 시간
+    float GetAnimationFrameDuration(PlayerAnimationState state) const;
+
+    // 해당 애니메이션이 반복되는지 확인
+    bool IsAnimationLooping(PlayerAnimationState state) const;
+
+    // Animator가 선택한 프레임을 캐릭터 부위에 적용
+    void ApplyAnimationFrame(PlayerAnimationState state, int frameIndex);
 
 private:
     // Visual Data 생성
@@ -39,15 +48,13 @@ private:
     void GenerateFireAnimation();
 
 private:
-    // 애니메이션 처리
-    void UpdateAnimation(float deltaTime);
+    // 현재 애니메이션 프레임 하나를 캐릭터 부위에 적용
+    void ApplyPartFrame(CharacterPart* part, const CharacterPartAnimation* animation, int frameIndex);
 
-    void ApplyCurrentFrame();
-
+    // 현재 방향에 따른 좌우 반전
     void ApplyFacing();
 
-
-private:
+    // Sprite 좌우 반전
     Craft::PixelSprite FlipHorizontal(const Craft::PixelSprite& sprite) const;
 
 
@@ -56,38 +63,31 @@ private:
     CharacterPart* head = nullptr;
     CharacterPart* body = nullptr;
     CharacterPart* legs = nullptr;
-
     CharacterPart* leftHand = nullptr;
     CharacterPart* rightHand = nullptr;
-
 
 private:
     bool isInitialized = false;
 
+    // true - 오른쪽
     bool isFacingRight = true;
 
-    PlayerAnimationState currentState = PlayerAnimationState::Idle;
-
-    int currentFrame = 0;
-
-    float frameTimer = 0.0f;
+    static constexpr int playerWidth = 9;
 
 private:
     // Player Visual Data
-    // 현재는 Idle만 실제 데이터가 들어간다.
-
+    
+    // Idle
     CharacterPartAnimation idleHead;
     CharacterPartAnimation idleBody;
     CharacterPartAnimation idleLegs;
-
     CharacterPartAnimation idleLeftHand;
     CharacterPartAnimation idleRightHand;
 
-    // 추후
+    // Walk
     CharacterPartAnimation walkHead;
     CharacterPartAnimation walkBody;
     CharacterPartAnimation walkLegs;
-
     CharacterPartAnimation walkLeftHand;
     CharacterPartAnimation walkRightHand;
 };
