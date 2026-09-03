@@ -29,6 +29,11 @@ public:
 
 	void Drop(const Craft::Vector2F& dropPosition);
 
+	// 장착할 위치 전달
+	void SetAttachPosition(const Craft::Vector2F& newAttachPosition);
+
+	void SetFacingRight(bool newFacingRight);
+
 	// Getter
 	// 현재 장착 상태인지 확인
 	inline bool IsEquipped() const { return weaponState == WeaponState::Equipped; }
@@ -42,14 +47,26 @@ public:
 	// 무기 상태 반환
 	inline WeaponState GetWeaponState() const { return weaponState; }
 
+	// 무기가 바라볼 방향
+	inline bool IsFacingRight() const { return isFacingRight; }
+
+protected:
+	virtual void OnFacingChanged();
+
 protected:
 	// 장착 위치
-	Craft::Vector2F equipOffset = Craft::Vector2F::Zero;
+	Craft::Vector2F attachPosition = Craft::Vector2F::Zero;
+
+	// 장착 위치 보정
+	Craft::Vector2F gridOffset = Craft::Vector2F::Zero;
 
 private:
 	WeaponState weaponState = WeaponState::Dropped;
 
 	// 현재 무기를 들고있는 액터
 	std::weak_ptr<Craft::Actor> weaponOwner;
+
+	// true = 오른쪽
+	bool isFacingRight = true;
 };
 

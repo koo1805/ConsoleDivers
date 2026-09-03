@@ -56,6 +56,12 @@ void Player::EquipWeapon(const std::shared_ptr<WeaponBase>& weapon)
 
 	// Actor가 enable_shared_from_this를 가지므로 플레이어 자신을 Weapon에게 넘길수 있음
 	weapon->Equip(shared_from_this());
+
+	// 초기 방향 동기화
+	weapon->SetFacingRight(isFacingRight);
+
+	// 초기 Attach 동기화
+	weapon->SetAttachPosition(GetWeaponAttachPosition());
 }
 
 void Player::DropWeapon()
@@ -91,6 +97,24 @@ bool Player::HasWeapon() const
 {
 	// weak_ptr이 만료되지 않았다면 장착한 무기가 존재한다는 것
 	return !equippedWeapon.expired();
+}
+
+Craft::Vector2F Player::GetWeaponAttachPosition() const
+{
+	// 왼손 검색
+	const CharacterPart* leftHand = GetPart(CharacterPartType::LeftHand);
+
+	// 예외 처리
+	if (!leftHand)
+	{
+		return GetPosition();
+	}
+
+	// 왼손 상대 위치
+	const Craft::Vector2 handLocalPosition = leftHand->GetLocalPosition();
+
+	// 로컬 위치 -> 월드 위치
+	return Craft::Vector2F(position.x + static_cast<float>(handLocalPosition.x), position.y + static_cast<float>(handLocalPosition.y));
 }
 
 void Player::Tick(float deltaTime)
@@ -195,6 +219,15 @@ void Player::Tick(float deltaTime)
 	}
 
 	animator.Tick(deltaTime);
+
+	if (std::shared_ptr<WeaponBase> weapon = GetEquippedWeapon())
+	{
+		// 손 위치 전달
+		weapon->SetAttachPosition(GetWeaponAttachPosition());
+
+		// 현재 플레이어 좌우방향 전달
+		weapon->SetFacingRight(isFacingRight);
+	}
 
 	// ESC로 프로그램 종료 테스트
 	if (Input::Get().GetKeyDown(VK_ESCAPE))

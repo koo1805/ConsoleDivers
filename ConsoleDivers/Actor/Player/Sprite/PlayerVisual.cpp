@@ -482,14 +482,14 @@ void PlayerVisual::GenerateIdleAnimation()
 		CharacterPartFrame{
 			handSprite,
 			Craft::Vector2(2, 9),
-			3
+			6
 		});
 
 	idleRightHand.frames.push_back(
 		CharacterPartFrame{
 			handSprite,
 			Craft::Vector2(7, 8),
-			3
+			4
 		});
 
 	idleHead.frameDuration = 0.35f;
@@ -804,14 +804,14 @@ void PlayerVisual::GenerateDiveAnimation()
 		CharacterPartFrame{
 			handSprite,
 			Craft::Vector2(8, 4),
-			3
+			6
 		});
 
 	diveRightHand.frames.push_back(
 		CharacterPartFrame{
 			handSprite,
 			Craft::Vector2(11, 5),
-			3
+			4
 		});
 
 	diveHead.frameDuration = 0.35f;

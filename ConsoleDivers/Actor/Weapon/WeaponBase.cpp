@@ -7,7 +7,7 @@ WeaponBase::WeaponBase(const Craft::Vector2F& position)
 {
 	weaponState = WeaponState::Dropped;
 
-	sortingOrder = 11;
+	sortingOrder = 15;
 }
 
 void WeaponBase::Tick(float deltaTime)
@@ -31,11 +31,8 @@ void WeaponBase::Tick(float deltaTime)
 		return;
 	}
 
-	// Owner 위치 추적
-	const Craft::Vector2F ownerPosition = owner->GetPosition();
-
-	// Todo: 플레이어 attach기능 구현
-	SetPosition(Craft::Vector2F(ownerPosition.x + equipOffset.x, ownerPosition.y + equipOffset.y));
+	// 플레이어 왼손 위치 전달
+	SetPosition(Craft::Vector2F(attachPosition.x + gridOffset.x, attachPosition.y + gridOffset.y));
 }
 
 void WeaponBase::Fire()
@@ -68,4 +65,29 @@ void WeaponBase::Drop(const Craft::Vector2F& dropPosition)
 
 	// 드랍 위치
 	SetPosition(dropPosition);
+}
+
+void WeaponBase::SetAttachPosition(const Craft::Vector2F& newAttachPosition)
+{
+	// 플레이어가 전달한 현재 손 위치 저장
+	attachPosition = newAttachPosition;
+}
+
+void WeaponBase::SetFacingRight(bool newFacingRight)
+{
+	// 같은 방향이면 건너뜀
+	if (isFacingRight == newFacingRight)
+	{
+		return;
+	}
+
+	// 방향 변경
+	isFacingRight = newFacingRight;
+
+	// 파생 클래스에 알림
+	OnFacingChanged();
+}
+
+void WeaponBase::OnFacingChanged()
+{
 }

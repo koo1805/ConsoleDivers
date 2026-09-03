@@ -21,11 +21,35 @@ namespace
 Shotgun::Shotgun(const Craft::Vector2F& position)
 	: WeaponBase(position)
 {
-	ChangePixelSprite(CreateShotgunSprite());
+    rightPixel = CreateShotgunSprite();
+
+    leftPixel = FlipHorizontal(rightPixel);
+
+	ChangePixelSprite(rightPixel);
+
+    gridOffset = Craft::Vector2F(-2.0f, -2.0f);
 }
 
 void Shotgun::Fire()
 {
+}
+
+void Shotgun::OnFacingChanged()
+{
+    if (IsFacingRight())
+    {
+        // 오른쪽
+        ChangePixelSprite(rightPixel);
+
+        gridOffset = Craft::Vector2F(-2.0f, -2.0f);
+
+        return;
+    }
+
+    // 왼쪽
+    ChangePixelSprite(leftPixel);
+
+    gridOffset = Craft::Vector2F(-8.0f, -2.0f);
 }
 
 Craft::PixelSprite Shotgun::CreateShotgunSprite() const
@@ -131,4 +155,24 @@ Craft::PixelSprite Shotgun::CreateShotgunSprite() const
     }
 
 	return sprite;
+}
+
+Craft::PixelSprite Shotgun::FlipHorizontal(const Craft::PixelSprite& sprite) const
+{
+    const int width = sprite.GetWidth();
+    const int height = sprite.GetHeight();
+
+    Craft::PixelSprite flippedSprite(width, height);
+
+    for (int y = 0; y < height; ++y)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            const int sourceX = width - 1 - x;
+
+            flippedSprite.SetCell(x, y, sprite.GetCell(sourceX, y));
+        }
+    }
+
+    return flippedSprite;
 }

@@ -40,6 +40,9 @@ public:
 	// 무기 장착 상태 확인
 	bool HasWeapon() const;
 
+	// 무기를 장착할 위치 반환
+	Craft::Vector2F GetWeaponAttachPosition() const;
+
 private:
 	virtual void Tick(float deltaTime) override;
 
