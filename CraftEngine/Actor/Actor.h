@@ -7,6 +7,8 @@
 #include <Math/ColorRGB.h>
 #include <Render/Sprite/Sprite.h>
 #include <Render/Sprite/PixelSprite.h>
+#include <Physics/CollisionLayer.h>
+
 #include <memory>		// std::weak_ptr 사용을 위해
 
 namespace Craft
@@ -69,6 +71,12 @@ namespace Craft
 		inline std::shared_ptr<Level> GetOwner() const { return owner.lock(); }
 		inline void SetOwner(std::weak_ptr<Level> newOwner) { owner = newOwner; }
 
+		inline CollisionLayer GetCollisionLayer() const { return collisionLayer; }
+		inline void SetCollisionLayer(CollisionLayer newLayer) { collisionLayer = newLayer; }
+
+		inline CollisionMask GetCollisionMask() const { return collisionMask; }
+		inline void SetCollisionMask(CollisionMask newMask) { collisionMask = newMask; }
+
 		inline Vector2F GetPosition() const { return position; }
 		void SetPosition(const Vector2F& newPosition);
 
@@ -128,5 +136,11 @@ namespace Craft
 
 		// 이전 프레임 위치
 		Vector2F previousPosition;
+
+		// 액터 자신이 속한 충돌 그룹 - 기본값 : Layer0
+		CollisionLayer collisionLayer = CollisionLayer::Layer0;
+
+		// 액터 자신의 충돌을 허용하는 Layer 목록 - 기본값 : All
+		CollisionMask collisionMask = CollisionMaskAll;
 	};
 }

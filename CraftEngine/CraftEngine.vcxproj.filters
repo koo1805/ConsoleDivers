@@ -137,5 +137,8 @@
     <ClInclude Include="Render\Debugging\DebugRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Physics\CollisionLayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

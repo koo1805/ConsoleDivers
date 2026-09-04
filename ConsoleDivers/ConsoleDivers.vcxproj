@@ -118,6 +118,7 @@
     <ClInclude Include="Actor\Character\Character.h" />
     <ClInclude Include="Actor\Character\CharacterPart.h" />
     <ClInclude Include="Actor\Character\CharacterStats.h" />
+    <ClInclude Include="Actor\Enemy\Data\EnemyStats.h" />
     <ClInclude Include="Actor\Player\Animation\PlayerAnimator.h" />
     <ClInclude Include="Actor\Player\Data\PlayerVisualData.h" />
     <ClInclude Include="Actor\Player\Player.h" />
@@ -128,6 +129,7 @@
     <ClInclude Include="Actor\Weapon\Data\WeaponData.h" />
     <ClInclude Include="Actor\Weapon\Shotgun\Shotgun.h" />
     <ClInclude Include="Actor\Weapon\WeaponBase.h" />
+    <ClInclude Include="Collision\ConsoleDiversCollisionLayer.h" />
     <ClInclude Include="Debugging\DebugManager.h" />
     <ClInclude Include="Level\GameLevel.h" />
     <ClInclude Include="Test\TestActor.h" />

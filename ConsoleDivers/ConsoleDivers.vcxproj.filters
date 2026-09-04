@@ -113,5 +113,11 @@
     <ClInclude Include="Actor\Weapon\ArcThrower\ArcThrower.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Collision\ConsoleDiversCollisionLayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Enemy\Data\EnemyStats.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
 ﻿#include "WeaponBase.h"
+#include <Collision/ConsoleDiversCollisionLayer.h>
 
 using namespace Craft;
 
@@ -10,6 +11,12 @@ WeaponBase::WeaponBase(WeaponSlotType slotType, const WeaponAmmoData& ammoData, 
 	weaponState = WeaponState::Dropped;
 
 	sortingOrder = 15;
+
+	// 파생 무기클래스들은 모두 Weapon Layer에 속함
+	SetCollisionLayer(GameCollision::Weapon);
+
+	// 생성 직후 상태는 Dropped - 바닥에 있는 Weapon은 Player와 충돌함
+	SetCollisionMask(GameCollision::Mask(GameCollision::Player));
 }
 
 void WeaponBase::Tick(float deltaTime)
@@ -33,6 +40,10 @@ void WeaponBase::Tick(float deltaTime)
 	if (!owner)
 	{
 		weaponState = WeaponState::Dropped;
+
+		// Owner가 사라져도 다시 충돌할 수 있게 Mask복구
+		SetCollisionMask(GameCollision::Mask(GameCollision::Player));
+
 		return;
 	}
 
@@ -120,6 +131,9 @@ void WeaponBase::Equip(const std::shared_ptr<Craft::Actor>& newOwner)
 
 	// 장착 상태
 	weaponState = WeaponState::Equipped;
+
+	// Dropped상태가 아니니 충돌을 비활성화 함
+	SetCollisionMask(Craft::CollisionMaskNone);
 }
 
 void WeaponBase::Drop(const Craft::Vector2F& dropPosition)
@@ -139,6 +153,9 @@ void WeaponBase::Drop(const Craft::Vector2F& dropPosition)
 
 	// 상태 변경
 	weaponState = WeaponState::Dropped;
+
+	// Dropped상태이기 때문에 충돌 활성화
+	SetCollisionMask(GameCollision::Mask(GameCollision::Player));
 
 	// 드랍 위치
 	SetPosition(dropPosition);

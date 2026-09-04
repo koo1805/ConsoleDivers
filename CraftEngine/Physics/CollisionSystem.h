@@ -26,6 +26,8 @@ namespace Craft
 		void ProcessCollision(const std::vector<std::shared_ptr<Actor>>& actorList);
 
 	private:
+		// 두 액터의 CollisionLayer / CollisionMask를 비교해 충돌하도록 설정되어 있는지 확인
+		bool ShouldCollide(const std::shared_ptr<Actor>& left, const std::shared_ptr<Actor>& right);
 
 		// 두 액터가 충돌했는지 확인(테스트)하는 함수
 		bool Test(

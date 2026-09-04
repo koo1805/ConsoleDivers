@@ -1,6 +1,7 @@
 ﻿#include "PelletProjectile.h"
 #include <Render/Cell.h>
 #include <Math/ColorRGB.h>
+#include <Collision/ConsoleDiversCollisionLayer.h>
 
 namespace
 {
@@ -25,6 +26,14 @@ PelletProjectile::PelletProjectile(
 	bool isHoming)
     : ProjectileBase(position, direction, speed, lifeTime, isHoming)
 {
+    // 플레이어가 발사하는 Projectile
+    SetCollisionLayer(GameCollision::PlayerProjectile);
+
+    // 충돌 Mask
+    SetCollisionMask(
+        GameCollision::Mask(GameCollision::Enemy) |
+        GameCollision::Mask(GameCollision::World));
+
     ChangePixelSprite(CreatePelletSprite());
 }
 

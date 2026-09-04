@@ -1,10 +1,11 @@
 ﻿#include "Player.h"
+#include <Level/Level.h>
 #include <Render/Renderer.h>
 #include <Camera/Camera.h>
 #include <Input/Input.h>
+#include <Collision/ConsoleDiversCollisionLayer.h>
 #include <Actor/Weapon/WeaponBase.h>
 #include <Actor/Weapon/Shotgun/Shotgun.h>
-#include <Level/Level.h>
 
 #include <memory>
 #include <cmath>
@@ -16,6 +17,15 @@ Player::Player()
 	sortingOrder = 10;
 
 	SetCharacterBounds(PlayerWidth, PlayerHeight);
+
+	// 충돌 Layer 설정
+	SetCollisionLayer(GameCollision::Player);
+	// 충돌 Mask 설정
+	SetCollisionMask(
+		GameCollision::Mask(GameCollision::Enemy)			|
+		GameCollision::Mask(GameCollision::EnemyProjectile)	|
+		GameCollision::Mask(GameCollision::Weapon)			|
+		GameCollision::Mask(GameCollision::World));
 
 	// 부위 Sprite 생성 및 Character에 등록
 	PlayerPartsGenerate();
