@@ -60,6 +60,24 @@
     <ClCompile Include="Actor\Weapon\ArcThrower\ArcThrower.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Actor\Enemy\EnemyBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor\Enemy\NormalEnemy\NormalEnemy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor\Enemy\EnemyVisualBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor\Enemy\NormalEnemy\Sprite\NormalEnemyVisual.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor\Enemy\EnemyAnimatorBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor\Enemy\NormalEnemy\Animation\NormalEnemyAnimator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Level\GameLevel.h">
@@ -117,6 +135,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Actor\Enemy\Data\EnemyStats.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Enemy\EnemyBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Enemy\NormalEnemy\NormalEnemy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Enemy\EnemyVisualBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Enemy\NormalEnemy\Sprite\NormalEnemyVisual.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Enemy\EnemyAnimatorBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Enemy\NormalEnemy\Animation\NormalEnemyAnimator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

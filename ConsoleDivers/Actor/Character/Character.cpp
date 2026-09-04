@@ -27,6 +27,35 @@ void Character::Draw()
     }
 }
 
+void Character::TakeDamage(int damage)
+{
+    // 예외 처리
+    if (damage <= 0)
+    {
+        return;
+    }
+
+    if (IsDead())
+    {
+        return;
+    }
+
+    // 체력 처리
+    currentHealth -= damage;
+
+    if (currentHealth <= 0)
+    {
+        currentHealth = 0;
+
+        OnDeath();
+    }
+}
+
+bool Character::IsDead() const
+{
+    return currentHealth <= 0;
+}
+
 // 새로운 부위 추가
 CharacterPart& Character::AddPart(std::unique_ptr<CharacterPart> part, int maxPartHealth)
 {
@@ -138,6 +167,11 @@ void Character::RestorePart(CharacterPartType type)
 CharacterPartHealth Character::GetPartHealth(CharacterPartType type) const
 {
 	return partHealth[ToPartIndex(type)];
+}
+
+void Character::OnDeath()
+{
+
 }
 
 // Actor와 기존 카메라/월드 Bounds 시스템 호환용

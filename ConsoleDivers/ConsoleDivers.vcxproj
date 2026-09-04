@@ -100,6 +100,12 @@
   <ItemGroup>
     <ClCompile Include="Actor\Character\Character.cpp" />
     <ClCompile Include="Actor\Character\CharacterPart.cpp" />
+    <ClCompile Include="Actor\Enemy\EnemyAnimatorBase.cpp" />
+    <ClCompile Include="Actor\Enemy\EnemyBase.cpp" />
+    <ClCompile Include="Actor\Enemy\EnemyVisualBase.cpp" />
+    <ClCompile Include="Actor\Enemy\NormalEnemy\Animation\NormalEnemyAnimator.cpp" />
+    <ClCompile Include="Actor\Enemy\NormalEnemy\NormalEnemy.cpp" />
+    <ClCompile Include="Actor\Enemy\NormalEnemy\Sprite\NormalEnemyVisual.cpp" />
     <ClCompile Include="Actor\Player\Animation\PlayerAnimator.cpp" />
     <ClCompile Include="Actor\Player\Player.cpp" />
     <ClCompile Include="Actor\Player\Sprite\PlayerVisual.cpp" />
@@ -119,6 +125,12 @@
     <ClInclude Include="Actor\Character\CharacterPart.h" />
     <ClInclude Include="Actor\Character\CharacterStats.h" />
     <ClInclude Include="Actor\Enemy\Data\EnemyStats.h" />
+    <ClInclude Include="Actor\Enemy\EnemyAnimatorBase.h" />
+    <ClInclude Include="Actor\Enemy\EnemyBase.h" />
+    <ClInclude Include="Actor\Enemy\EnemyVisualBase.h" />
+    <ClInclude Include="Actor\Enemy\NormalEnemy\Animation\NormalEnemyAnimator.h" />
+    <ClInclude Include="Actor\Enemy\NormalEnemy\NormalEnemy.h" />
+    <ClInclude Include="Actor\Enemy\NormalEnemy\Sprite\NormalEnemyVisual.h" />
     <ClInclude Include="Actor\Player\Animation\PlayerAnimator.h" />
     <ClInclude Include="Actor\Player\Data\PlayerVisualData.h" />
     <ClInclude Include="Actor\Player\Player.h" />

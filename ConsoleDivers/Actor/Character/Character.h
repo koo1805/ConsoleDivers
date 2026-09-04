@@ -31,6 +31,12 @@ public:
     // Character는 모든 CharacterPart를 각각 렌더
     virtual void Draw() override;
 
+    // 데미지 처리
+    virtual void TakeDamage(int damage);
+
+    // 캐릭터가 죽었는지 반환
+    bool IsDead() const;
+
 protected:
     // 모두 CharacterPart 포인터로 저장할 수 있게 하기 위함
     CharacterPart& AddPart(std::unique_ptr<CharacterPart> part, int maxPartHealth = 0);
@@ -49,6 +55,9 @@ protected:
 
     // 특정 부위 HP 반환
     CharacterPartHealth GetPartHealth(CharacterPartType type) const;
+
+    // 사망 처리
+    virtual void OnDeath();
 
 protected:
     // Character Bounds 설정

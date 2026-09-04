@@ -71,11 +71,24 @@ namespace Craft
 				continue;
 			}
 
+			// 수집 중 삭제되거나 비활성화된 액터는 제외
+			// 현재 Collision Layer / Mask 재검사
+			if (!ShouldCollide(pair.actor, pair.other))
+			{
+				continue;
+			}
+
 			// 충돌 이벤트 전달
 			pair.actor->OnCollision(pair.other);
 
 			// 이미 삭제되거나 비활성화된 액터는 제외
 			if (!pair.actor->IsActive() || !pair.other->IsActive())
+			{
+				continue;
+			}
+
+			// 첫 번째 Collision callback 중에도 Mask가 변경될 수 있으므로 한 번 더 확인
+			if (!ShouldCollide(pair.actor, pair.other))
 			{
 				continue;
 			}

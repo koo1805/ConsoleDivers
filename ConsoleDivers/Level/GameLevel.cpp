@@ -7,6 +7,7 @@
 #include <Actor/Player/Player.h>
 
 #include <Actor/Weapon/Shotgun/Shotgun.h>
+#include <Actor/Enemy/NormalEnemy/NormalEnemy.h>
 
 #include <Test/TestBG.h>
 
@@ -22,6 +23,8 @@ void GameLevel::OnInitialized()
 	Craft::Renderer::Get().GetCamera().SetCameraClampSize(Craft::TestBG::GetWorldSize());
 
 	player = SpawnActor<Player>();
+
+	SpawnActor<NormalEnemy>(Craft::Vector2F(player->GetPosition().x + 40.0f, player->GetPosition().y + 20.0f));
 
 	SpawnActor<Shotgun>(Craft::Vector2F(player->GetPosition().x + 12.0f, player->GetPosition().y));
 

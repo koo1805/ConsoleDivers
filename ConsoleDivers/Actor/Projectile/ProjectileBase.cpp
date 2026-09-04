@@ -1,4 +1,5 @@
 ﻿#include "ProjectileBase.h"
+#include <Actor/Character/Character.h>
 
 #include <cmath>
 
@@ -27,6 +28,34 @@ void ProjectileBase::Tick(float deltaTime)
 
 	// 수명
 	UpdateLifeTime(deltaTime);
+}
+
+void ProjectileBase::OnCollision(const std::shared_ptr<Actor>& other)
+{
+	// 예외 처리
+	if (!other)
+	{
+		return;
+	}
+
+	// Character 충돌 확인
+	std::shared_ptr<Character> character = std::dynamic_pointer_cast<Character>(other);
+
+	if (!character)
+	{
+		return;
+	}
+
+	if (character->IsDead())
+	{
+		return;
+	}
+
+	// 데미지
+	character->TakeDamage(damage);
+
+	// 적중 후 탄 사라짐
+	Destroy();
 }
 
 void ProjectileBase::SetDirection(const Craft::Vector2F& newDirection)

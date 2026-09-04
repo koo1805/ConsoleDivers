@@ -21,6 +21,8 @@ public:
 public:
 	virtual void Tick(float deltaTime) override;
 
+	virtual void OnCollision(const std::shared_ptr<Actor>& other) override;
+
 	// 진행 방향 설정
 	void SetDirection(const Craft::Vector2F& newDirection);
 
@@ -31,9 +33,11 @@ public:
 	inline Craft::Vector2F GetDirection() const { return direction; }
 	inline bool IsHoming() const { return isHoming; }
 	inline std::shared_ptr<Craft::Actor> GetProjectileOwner() const { return projectileOwner.lock(); }
+	inline int GetDamage() const { return damage; }
 
 	// Setter
 	inline void SetSpeed(float newSpeed) { speed = newSpeed; }
+	inline void SetDamage(int newDamage) { damage = newDamage; }
 
 protected:
 	virtual void Move(float deltaTime);
@@ -43,6 +47,9 @@ protected:
 private:
 	// 정규화된 방향
 	Craft::Vector2F direction = Craft::Vector2F::Zero;
+
+	// 데미지
+	int damage = 10;
 
 	// 이동 속도
 	float speed = 0.0f;
