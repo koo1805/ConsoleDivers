@@ -114,6 +114,8 @@
     <ClCompile Include="Actor\Weapon\ArcThrower\ArcThrower.cpp" />
     <ClCompile Include="Actor\Weapon\Shotgun\Shotgun.cpp" />
     <ClCompile Include="Actor\Weapon\WeaponBase.cpp" />
+    <ClCompile Include="Algorithm\AStar\AStarPathFinder.cpp" />
+    <ClCompile Include="Algorithm\AStar\Navigation\NavigationGrid.cpp" />
     <ClCompile Include="Debugging\DebugManager.cpp" />
     <ClCompile Include="Level\GameLevel.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -141,6 +143,9 @@
     <ClInclude Include="Actor\Weapon\Data\WeaponData.h" />
     <ClInclude Include="Actor\Weapon\Shotgun\Shotgun.h" />
     <ClInclude Include="Actor\Weapon\WeaponBase.h" />
+    <ClInclude Include="Algorithm\AStar\AStarNode.h" />
+    <ClInclude Include="Algorithm\AStar\AStarPathFinder.h" />
+    <ClInclude Include="Algorithm\AStar\Navigation\NavigationGrid.h" />
     <ClInclude Include="Collision\ConsoleDiversCollisionLayer.h" />
     <ClInclude Include="Debugging\DebugManager.h" />
     <ClInclude Include="Level\GameLevel.h" />

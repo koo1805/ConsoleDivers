@@ -12,6 +12,7 @@
 #include <Test/TestBG.h>
 
 #include <Windows.h>
+#include <cstdio>
 
 using namespace Craft;
 void GameLevel::OnInitialized()
@@ -21,6 +22,71 @@ void GameLevel::OnInitialized()
 
 	testBGActor = SpawnActor<Craft::TestBG>();
 	Craft::Renderer::Get().GetCamera().SetCameraClampSize(Craft::TestBG::GetWorldSize());
+
+	//---------------------------------------------------------
+	const Craft::Vector2 worldSize = Craft::TestBG::GetWorldSize();
+
+	constexpr int navigationCellSize = 10;
+
+	const int gridWidth = worldSize.x / navigationCellSize;
+
+	const int gridHeight =
+		worldSize.y / navigationCellSize;
+
+	navigationGrid.Initialize(
+		gridWidth,
+		gridHeight,
+		navigationCellSize);
+
+	// 테스트용 벽
+	for (int y = 20; y < 50; ++y)
+	{
+		navigationGrid.SetWalkable(
+			40,
+			y,
+			false);
+	}
+
+	// 테스트 시작 위치
+	const Craft::Vector2 startGridPosition(
+		35,
+		30);
+
+	// 테스트 목표 위치
+	const Craft::Vector2 goalGridPosition(
+		45,
+		30);
+
+	// NavigationGrid를 기준으로 실제 A* 경로 탐색
+	testPath = pathFinder.FindPath(
+		navigationGrid,
+		startGridPosition,
+		goalGridPosition);
+
+	char pathDebugString[128] = {};
+
+	sprintf_s(
+		pathDebugString,
+		"[AStar] Path Count: %zu\n",
+		testPath.size());
+
+	OutputDebugStringA(pathDebugString);
+
+	for (const Craft::Vector2& pathPosition : testPath)
+	{
+		char pathPositionString[128] = {};
+
+		sprintf_s(
+			pathPositionString,
+			"[AStar] Path : (%d, %d)\n",
+			pathPosition.x,
+			pathPosition.y);
+
+		OutputDebugStringA(
+			pathPositionString);
+	}
+
+	// -----------------------------------------------------------
 
 	player = SpawnActor<Player>();
 

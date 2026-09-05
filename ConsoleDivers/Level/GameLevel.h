@@ -1,7 +1,11 @@
 ﻿#pragma once
 
 #include <Level/Level.h>
+#include <Algorithm/AStar/Navigation/NavigationGrid.h>
+#include <Algorithm/AStar/AStarPathFinder.h>
+
 #include <memory>
+#include <vector>
 
 // 전방 선언
 class Player;
@@ -32,5 +36,11 @@ private:
 	std::shared_ptr<Craft::TestBG> testBGActor;
 
 	std::shared_ptr<Craft::CameraController> cameraController;
+
+	NavigationGrid navigationGrid;
+
+	AStarPathFinder pathFinder;
+
+	std::vector<Craft::Vector2> testPath;
 };
 
