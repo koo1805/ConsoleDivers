@@ -2,6 +2,7 @@
 
 #include <Level/Level.h>
 #include <Algorithm/AStar/Navigation/NavigationGrid.h>
+#include <Algorithm/QuadTree/QuadTree.h>
 
 #include <memory>
 
@@ -39,5 +40,7 @@ private:
 	std::shared_ptr<Craft::CameraController> cameraController;
 
 	NavigationGrid navigationGrid;
+
+	std::unique_ptr<Craft::QuadTree> quadTree;
 };
 

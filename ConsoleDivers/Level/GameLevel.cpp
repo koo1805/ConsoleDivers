@@ -26,6 +26,17 @@ void GameLevel::OnInitialized()
 	//---------------------------------------------------------
 	const Craft::Vector2 worldSize = Craft::TestBG::GetWorldSize();
 
+	quadTree = std::make_unique<Craft::QuadTree>(
+		Craft::QuadTreeBounds(
+			0.0f,
+			0.0f,
+			static_cast<float>(worldSize.x),
+			static_cast<float>(worldSize.y)),
+		4);
+
+	// QuadTree Debug 연결
+	DebugManager::Get().SetQuadTreeDebugData(quadTree.get());
+
 	constexpr int navigationCellSize = 10;
 
 	const int gridWidth = worldSize.x / navigationCellSize;
@@ -83,6 +94,58 @@ void GameLevel::Tick(float deltaTime)
 	// Level이 가지고 있는 Actor들의 Tick 실행
 	Level::Tick(deltaTime);
 
+	if (quadTree)
+	{
+		// 이전 프레임의 공간 데이터 제거
+		quadTree->Clear();
+
+		// Player 삽입
+		if (player && player->IsActive())
+		{
+			quadTree->Insert(player);
+		}
+
+		// Enemy 삽입
+		if (normalEnemy && normalEnemy->IsActive())
+		{
+			quadTree->Insert(normalEnemy);
+		}
+	}
+
+	if (quadTree && player)
+	{
+		const Craft::Vector2F playerPosition = player->GetPosition();
+
+		// Player 기준 100 x 100 Query 영역
+		const Craft::QuadTreeBounds queryBounds(playerPosition.x - 50.0f, playerPosition.y - 50.0f, 100.0f, 100.0f);
+
+		// 현재 Query 영역에 포함되는 Actor 검색
+		const std::vector<std::shared_ptr<Craft::Actor>> nearbyActors = quadTree->Query(queryBounds);
+
+		// Query 디버그 시각화에 사용할 데이터 전달
+		DebugManager::Get().SetQuadTreeQueryDebugData(queryBounds.x, queryBounds.y, queryBounds.width, queryBounds.height, nearbyActors);
+
+		// 출력창 확인은 너무 자주 하지 않도록 0.5초에 한 번만 수행
+		static float quadTreeDebugTimer = 0.0f;
+
+		quadTreeDebugTimer += deltaTime;
+
+		if (quadTreeDebugTimer >= 0.5f)
+		{
+			quadTreeDebugTimer = 0.0f;
+
+			char buffer[128] = {};
+
+			sprintf_s(
+				buffer,
+				sizeof(buffer),
+				"[QuadTree] Nearby Actors: %zu\n",
+				nearbyActors.size());
+
+			OutputDebugStringA(buffer);
+		}
+	}
+
 	// 프레임 관련 문자열.
 	const int size = 256;
 	char fpsString[size] = {};
@@ -103,10 +166,7 @@ void GameLevel::Tick(float deltaTime)
 		return;
 	}
 
-	// ----------------------------------------------------
-	// 변경된 위치 적용
-	// ----------------------------------------------------
-	
+	// 변경된 위치 적용	
 	cameraController->SetTargetPosition(player->GetPosition());
 	cameraController->SetTargetMoving(player->IsMoving());
 	cameraController->Tick(deltaTime);

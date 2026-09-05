@@ -271,6 +271,30 @@ namespace Craft
 			return;
 		}
 
+		/*/
+		if (Input::Get().GetKeyDown(VK_F6))
+		{
+			collisionSystem->ToggleBroadPhaseMode();
+
+			const char* modeName = (collisionSystem->GetBroadPhaseMode() == CollisionBroadPhaseMode::BruteForce) ? "BruteForce" : "QuadTree";
+
+			char buffer[128] = {};
+
+			sprintf_s(buffer, sizeof(buffer), "[Collision] BroadPhase -> %s\n", modeName);
+
+			OutputDebugStringA(buffer);
+		}
+
+		if (Input::Get().GetKeyDown(VK_F7))
+		{
+			const bool enabled = !collisionSystem->IsPairValidationEnabled();
+
+			collisionSystem->SetPairValidationEnabled(enabled);
+
+			OutputDebugStringA(enabled ? "[Collision] Pair Validation ON\n" : "[Collision] Pair Validation OFF\n");
+		}		//*/
+
+
 		// 충돌 처리
 		// 의존성 주입(Dependency Injection)
 		collisionSystem->ProcessCollision(mainLevel->actorList);

@@ -17,6 +17,8 @@ namespace Craft
     {
         sortingOrder = 1;
 
+		SetCollisionMask(Craft::CollisionMaskNone);
+
 		BuildBackground();
     }
 

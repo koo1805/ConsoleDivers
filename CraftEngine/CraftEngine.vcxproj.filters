@@ -36,7 +36,7 @@
     <ClCompile Include="Render\ScreenBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Physics\CollisionSystem.cpp">
+    <ClCompile Include="Physics\QuadTreeCollisionSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Util\Timer.cpp">
@@ -64,6 +64,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Render\Debugging\DebugRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Algorithm\QuadTree\QuadTreeNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Algorithm\QuadTree\QuadTree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\CollisionSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -101,7 +110,7 @@
     <ClInclude Include="Util\Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Physics\CollisionSystem.h">
+    <ClInclude Include="Physics\QuadTreeCollisionSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Util\Timer.h">
@@ -138,6 +147,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Physics\CollisionLayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Algorithm\QuadTree\QuadTreeBounds.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Algorithm\QuadTree\QuadTreeNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Algorithm\QuadTree\QuadTree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\CollisionDebugStats.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\CollisionSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
