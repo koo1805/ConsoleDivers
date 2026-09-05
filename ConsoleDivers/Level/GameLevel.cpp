@@ -47,50 +47,18 @@ void GameLevel::OnInitialized()
 			false);
 	}
 
-	// 테스트 시작 위치
-	const Craft::Vector2 startGridPosition(
-		35,
-		30);
-
-	// 테스트 목표 위치
-	const Craft::Vector2 goalGridPosition(
-		45,
-		30);
-
-	// NavigationGrid를 기준으로 실제 A* 경로 탐색
-	testPath = pathFinder.FindPath(
-		navigationGrid,
-		startGridPosition,
-		goalGridPosition);
-
-	char pathDebugString[128] = {};
-
-	sprintf_s(
-		pathDebugString,
-		"[AStar] Path Count: %zu\n",
-		testPath.size());
-
-	OutputDebugStringA(pathDebugString);
-
-	for (const Craft::Vector2& pathPosition : testPath)
-	{
-		char pathPositionString[128] = {};
-
-		sprintf_s(
-			pathPositionString,
-			"[AStar] Path : (%d, %d)\n",
-			pathPosition.x,
-			pathPosition.y);
-
-		OutputDebugStringA(
-			pathPositionString);
-	}
-
 	// -----------------------------------------------------------
 
 	player = SpawnActor<Player>();
 
-	SpawnActor<NormalEnemy>(Craft::Vector2F(player->GetPosition().x + 40.0f, player->GetPosition().y + 20.0f));
+	// NormalEnemy 생성
+	normalEnemy = SpawnActor<NormalEnemy>(navigationGrid.GridToWorld(Craft::Vector2(35, 30)));
+
+	// EnemyBase에 구현된 A* 기능이 사용할 NavigationGrid 연결
+	if (normalEnemy)
+	{
+		normalEnemy->SetNavigationGrid(&navigationGrid);
+	}
 
 	SpawnActor<Shotgun>(Craft::Vector2F(player->GetPosition().x + 12.0f, player->GetPosition().y));
 
@@ -100,6 +68,12 @@ void GameLevel::OnInitialized()
 	cameraController->SnapToTarget();
 	// 디버그 매니저에 카메라 정보를 연결
 	DebugManager::Get().SetCameraController(cameraController.get());
+
+	// A* 디버그 시각화에 사용할 데이터 연결
+	if (normalEnemy)
+	{
+		DebugManager::Get().SetAStarDebugData(&navigationGrid, &normalEnemy->GetPathFinder());
+	}
 }
 
 

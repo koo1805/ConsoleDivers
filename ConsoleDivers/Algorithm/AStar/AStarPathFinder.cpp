@@ -158,6 +158,11 @@ std::vector<Craft::Vector2> AStarPathFinder::FindPath(const NavigationGrid& navi
     return {};
 }
 
+void AStarPathFinder::PreviousPathClear()
+{
+    Clear();
+}
+
 void AStarPathFinder::Clear()
 {
     nodes.clear();

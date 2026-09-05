@@ -16,6 +16,17 @@ EnemyBase::EnemyBase(const Craft::Vector2F position, const EnemyStats& stats)
 		GameCollision::Mask(GameCollision::World));
 }
 
+void EnemyBase::SetNavigationGrid(const NavigationGrid* newNavigationGrid)
+{
+	navigationGrid = newNavigationGrid;
+
+	// Grid가 변경되면 기존 Path는 더 이상 신뢰할 수 없음
+	ClearPath();
+
+	pathRefindTimer = 0.0f;
+	hasLastTargetGridPosition = false;
+}
+
 void EnemyBase::BeginPlay()
 {
 	super::BeginPlay();
@@ -48,6 +59,8 @@ void EnemyBase::Tick(float deltaTime)
 void EnemyBase::OnDeath()
 {
 	super::OnDeath();
+
+	ClearPath();
 
 	SetEnemyState(EnemyState::Dead);
 
@@ -192,4 +205,174 @@ bool EnemyBase::CanAttack() const
 void EnemyBase::StartAttackCooldown()
 {
 	attackCooldownTimer = enemyStats.attackCooldown;
+}
+
+void EnemyBase::RefindPath()
+{
+	if (!navigationGrid)
+	{
+		return;
+	}
+
+	const std::shared_ptr<Craft::Actor> target = GetTarget();
+
+	if (!target)
+	{
+		ClearPath();
+		return;
+	}
+
+	// World -> Grid
+	const Craft::Vector2 startGridPosition = navigationGrid->WorldToGrid(GetPosition());
+
+	const Craft::Vector2 targetGridPosition = navigationGrid->WorldToGrid(target->GetPosition());
+
+	// Grid 범위를 벗어나면 Path 생성 불가
+	if (!navigationGrid->IsValidGridPosition(startGridPosition))
+	{
+		ClearPath();
+		return;
+	}
+
+	if (!navigationGrid->IsValidGridPosition(targetGridPosition))
+	{
+		ClearPath();
+		return;
+	}
+
+	// A* 탐색
+	currentPath = pathFinder.FindPath(*navigationGrid, startGridPosition, targetGridPosition);
+
+	currentPathIndex = 0;
+
+	// Path[0]은 Enemy가 현재 위치한 Cell이므로 다음 Cell부터 추적
+	if (currentPath.size() > 1)
+	{
+		currentPathIndex = 1;
+	}
+
+	lastTargetGridPosition = targetGridPosition;
+	hasLastTargetGridPosition = true;
+}
+
+void EnemyBase::FollowPath(float deltaTime)
+{
+	if (!navigationGrid)
+	{
+		return;
+	}
+
+	if (currentPath.empty())
+	{
+		SetMoveDirection(Craft::Vector2F::Zero);
+
+		return;
+	}
+
+	// 이미 도달한 WayPoint는 건너뜀
+	while (currentPathIndex < currentPath.size() && HasReachedCurrentWayPoint())
+	{
+		++currentPathIndex;
+	}
+
+	// Path 끝까지 도착
+	if (currentPathIndex >= currentPath.size())
+	{
+		SetMoveDirection(Craft::Vector2F::Zero);
+
+		return;
+	}
+
+	const Craft::Vector2F wayPoint = navigationGrid->GridToWorld(currentPath[currentPathIndex]);
+
+	const Craft::Vector2F currentPosition = GetPosition();
+
+	const Craft::Vector2F direction(wayPoint.x - currentPosition.x, wayPoint.y - currentPosition.y);
+
+	// 기존 EnemyBase 이동 함수를 그대로 사용
+	MoveInDirection(direction, deltaTime);
+}
+
+void EnemyBase::UpdatePathFollowing(float deltaTime)
+{
+	const std::shared_ptr<Craft::Actor> target = GetTarget();
+
+	if (!target)
+	{
+		ClearPath();
+
+		SetMoveDirection(Craft::Vector2F::Zero);
+
+		return;
+	}
+
+	// NavigationGrid가 없으면 A* 이동을 사용할 수 없음
+	// NavigationGrid가 없으면 기존 직선 추적
+	if (!navigationGrid)
+	{
+		const Craft::Vector2F currentPosition = GetPosition();
+
+		const Craft::Vector2F targetPosition = target->GetPosition();
+
+		const Craft::Vector2F direction(targetPosition.x - currentPosition.x, targetPosition.y - currentPosition.y);
+
+		MoveInDirection(direction, deltaTime);
+
+		return;
+	}
+
+	// A* Path 갱신
+	pathRefindTimer -= deltaTime;
+
+	const Craft::Vector2 targetGridPosition = navigationGrid->WorldToGrid(target->GetPosition());
+
+	// Target이 다른 Grid Cell로 이동했는지 검사
+	const bool targetGridChanged = !hasLastTargetGridPosition || targetGridPosition != lastTargetGridPosition;
+
+	// Path 재탐색 조건
+	if (currentPath.empty() || pathRefindTimer <= 0.0f || targetGridChanged)
+	{
+		RefindPath();
+
+		pathRefindTimer = pathRefindInterval;
+	}
+
+	// 계산된 경로를 따라 이동
+	FollowPath(deltaTime);
+}
+
+void EnemyBase::ClearPath()
+{
+	currentPath.clear();
+
+	currentPathIndex = 0;
+
+	// A* Open / Closed / LastPath 디버그 데이터도 제거
+	pathFinder.PreviousPathClear();
+}
+
+bool EnemyBase::HasReachedCurrentWayPoint() const
+{
+	if (!navigationGrid)
+	{
+		return false;
+	}
+
+	if (currentPathIndex >= currentPath.size())
+	{
+		return false;
+	}
+
+	const Craft::Vector2F wayPoint = navigationGrid->GridToWorld(currentPath[currentPathIndex]);
+
+	const Craft::Vector2F currentPosition = GetPosition();
+
+	const float deltaX = wayPoint.x - currentPosition.x;
+	const float deltaY = wayPoint.y - currentPosition.y;
+
+	const float distanceSquared = deltaX * deltaX + deltaY * deltaY;
+
+	constexpr float WayPointReachDistance =  2.0f;
+	
+	return distanceSquared <= WayPointReachDistance * WayPointReachDistance;
 }

@@ -1,4 +1,9 @@
 ﻿#pragma once
+
+// Craft 외 클래스 전방 선언
+class NavigationGrid;
+class AStarPathFinder;
+
 namespace Craft
 {
 	// 전방 선언
@@ -19,6 +24,9 @@ namespace Craft
 		// Debug 렌더링
 		void Draw();
 
+		// A* 디버그에서 사용할 Navigation / PathFinder 연결
+		void SetAStarDebugData(const NavigationGrid* newNavigationGrid, const AStarPathFinder* newPathFinder);
+
 	private:
 		DebugManager() = default;
 		~DebugManager() = default;
@@ -37,6 +45,9 @@ namespace Craft
 		// 데드존 디버그 그리기
 		void DrawDeadZoneDebug();
 
+		// A* 디버그 그리기
+		void DrawAStarDebug();
+
 	private:
 		CameraController* cameraController = nullptr;
 
@@ -51,5 +62,14 @@ namespace Craft
 
 		// 색상 유지 시간
 		float deadZoneExitDuration = 0.15f;
+
+		// GameLevel이 소유하고 있는 NavigationGrid를 참조
+		const NavigationGrid* navigationGrid = nullptr;
+
+		// GameLevel이 소유하고 있는 AStarPathFinder를 참조
+		const AStarPathFinder* aStarPathFinder = nullptr;
+
+		// F4로 A* 시각화 ON / OFF
+		bool aStarDebugEnabled = false;
 	};
 }

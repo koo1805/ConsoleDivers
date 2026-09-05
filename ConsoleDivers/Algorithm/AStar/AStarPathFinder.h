@@ -35,6 +35,9 @@ public:
 		const Craft::Vector2& startPosition,
 		const Craft::Vector2& goalPosition);
 
+	// 이전 탐색 결과와 디버그 데이터를 모두 초기화
+	void PreviousPathClear();
+
 	// Debug용 데이터
 	inline const std::vector<Craft::Vector2>& GetOpenList() const { return openList; }
 	inline const std::vector<Craft::Vector2>& GetClosedList() const { return closedList; }

@@ -149,6 +149,7 @@ void NormalEnemy::UpdateBehavior(float deltaTime)
 	if (!target)
 	{
 		// 목표가 사라지면 정지
+		ClearPath();
 		SetMoveDirection(Craft::Vector2F::Zero);
 		SetEnemyState(EnemyState::Idle);
 
@@ -196,22 +197,15 @@ void NormalEnemy::UpdateBehavior(float deltaTime)
 	{
 		SetEnemyState(EnemyState::Chase);
 
-		// 현재 위치
-		const Craft::Vector2F enemyPosition = GetPosition();
-
-		// Player 위치
-		const Craft::Vector2F targetPosition = target->GetPosition();
-
-		// target 방향 계산
-		const Craft::Vector2F direction(targetPosition.x - enemyPosition.x, targetPosition.y - enemyPosition.y);
-
-		// 이동
-		MoveInDirection(direction, deltaTime);
+		// EnemyBase에 구현된 공통 A* 추적 사용
+		UpdatePathFollowing(deltaTime);
 
 		return;
 	}
 
 	// 감지 거리 밖
+	ClearPath();
+
 	SetMoveDirection(Craft::Vector2F::Zero);
 
 	SetEnemyState(EnemyState::Idle);
