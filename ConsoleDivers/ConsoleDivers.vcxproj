@@ -117,6 +117,11 @@
     <ClCompile Include="Algorithm\AStar\AStarPathFinder.cpp" />
     <ClCompile Include="Algorithm\AStar\Navigation\NavigationGrid.cpp" />
     <ClCompile Include="Debugging\DebugManager.cpp" />
+    <ClCompile Include="HUD\Equipment\AmmoHUD.cpp" />
+    <ClCompile Include="HUD\Equipment\WeaponSlotHUD.cpp" />
+    <ClCompile Include="HUD\GameHUD.cpp" />
+    <ClCompile Include="HUD\Player\PlayerStatusHUD.cpp" />
+    <ClCompile Include="HUD\Resource\Number\NumberSprite.cpp" />
     <ClCompile Include="Level\GameLevel.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Test\TestActor.cpp" />
@@ -126,6 +131,7 @@
     <ClInclude Include="Actor\Character\Character.h" />
     <ClInclude Include="Actor\Character\CharacterPart.h" />
     <ClInclude Include="Actor\Character\CharacterStats.h" />
+    <ClInclude Include="Actor\Character\DamageInfo.h" />
     <ClInclude Include="Actor\Enemy\Data\EnemyStats.h" />
     <ClInclude Include="Actor\Enemy\EnemyAnimatorBase.h" />
     <ClInclude Include="Actor\Enemy\EnemyBase.h" />
@@ -148,6 +154,11 @@
     <ClInclude Include="Algorithm\AStar\Navigation\NavigationGrid.h" />
     <ClInclude Include="Collision\ConsoleDiversCollisionLayer.h" />
     <ClInclude Include="Debugging\DebugManager.h" />
+    <ClInclude Include="HUD\Equipment\AmmoHUD.h" />
+    <ClInclude Include="HUD\Equipment\WeaponSlotHUD.h" />
+    <ClInclude Include="HUD\GameHUD.h" />
+    <ClInclude Include="HUD\Player\PlayerStatusHUD.h" />
+    <ClInclude Include="HUD\Resource\Number\NumberSprite.h" />
     <ClInclude Include="Level\GameLevel.h" />
     <ClInclude Include="Test\TestActor.h" />
     <ClInclude Include="Test\TestBG.h" />

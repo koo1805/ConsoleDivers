@@ -7,9 +7,17 @@ enum class WeaponSlotType
     Support         // 지원무기
 };
 
+enum class WeaponAmmoType
+{
+    Finite,		// 일반 탄약
+    Infinite	// 무한 탄약
+};
+
 // Weapon Ammo Data
 struct WeaponAmmoData
 {
+    WeaponAmmoType ammoType = WeaponAmmoType::Finite;
+
     // 탄창 하나의 최대 장탄수
     int magazineCapacity = 0;
 
@@ -34,4 +42,11 @@ struct WeaponRuntimeData
 
     // 현재 장전 경과 시간
     float reloadTimer = 0.0f;
+};
+
+// 무기의 전투 성능 데이터
+struct WeaponCombatData
+{
+    // Projectile 1개가 주는 기본 Damage
+    int damage = 0;
 };

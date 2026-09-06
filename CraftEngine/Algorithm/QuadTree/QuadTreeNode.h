@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "QuadTreeBounds.h"
+#include <Algorithm/QuadTree/QuadTreeQueryTrace.h>
 
 #include <memory>
 #include <vector>
@@ -63,6 +64,12 @@ namespace Craft
 		inline const QuadTreeNode* GetBottomLeft() const { return bottomLeft.get(); }
 
 		inline const QuadTreeNode* GetBottomRight() const { return bottomRight.get(); }
+
+		// Query + 탐색 과정 기록
+		void QueryWithTrace(
+			const QuadTreeBounds& queryBounds,
+			std::vector<std::shared_ptr<Actor>>& results,
+			std::vector<QuadTreeQueryStep>& trace) const;
 
 	private:
 		// 공간 4분할

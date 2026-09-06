@@ -63,6 +63,20 @@ namespace Craft
 			quadTreeDebugEnabled = !quadTreeDebugEnabled;
 		}
 
+		// F6 : ArcThrower Algorithm Debug Mode
+		if (Input::Get().GetKeyDown(VK_F6))
+		{
+			arcThrowerDebugEnabled = !arcThrowerDebugEnabled;
+
+			// OFF 시 이전 Arc Trace 제거
+			if (!arcThrowerDebugEnabled)
+			{
+				arcQueryRecords.clear();
+
+				arcDebugCapturing = false;
+			}
+		}
+
 		UpdateDeadZoneDebug(deltaTime);
 	}
 
@@ -83,6 +97,9 @@ namespace Craft
 
 		// QuadTree Query 영역 및 결과
 		DrawQuadTreeQueryDebug();
+
+		// ArcThrower가 실제로 어떤 QuadTree Node를 검사하고 어떤 Enemy를 선택했는지 표시
+		DrawArcThrowerDebug();
 
 		// Debug 렌더 명령을 실제 렌더러에게 전달
 		debugRenderer.DebugFlush();
@@ -124,6 +141,55 @@ namespace Craft
 
 			quadTreeQueryResults.emplace_back(actor);
 		}
+	}
+
+	void DebugManager::BeginArcThrowerDebugCapture()
+	{
+		if (!arcThrowerDebugEnabled)
+		{
+			return;
+		}
+
+		// 이전 발사 기록 제거
+		arcQueryRecords.clear();
+
+		arcDebugCapturing = true;
+	}
+
+	void DebugManager::AddArcThrowerQueryRecord(const QuadTreeBounds& queryBounds, const std::vector<QuadTreeQueryStep>& trace, const std::shared_ptr<Actor>& selectedTarget)
+	{
+		if (!arcThrowerDebugEnabled)
+		{
+			return;
+		}
+
+		if (!arcDebugCapturing)
+		{
+			return;
+		}
+
+		ArcQueryDebugRecord record;
+
+		record.queryBounds = queryBounds;
+
+		record.trace = trace;
+
+		record.selectedTarget = selectedTarget;
+
+		arcQueryRecords.emplace_back(std::move(record));
+	}
+
+	void DebugManager::EndArcThrowerDebugCapture()
+	{
+		if (!arcThrowerDebugEnabled)
+		{
+			return;
+		}
+
+		arcDebugCapturing = false;
+
+		// 다음 단계에서 여기서
+		// StartArcDebugPlayback();
 	}
 
 	void DebugManager::UpdateDeadZoneDebug(float deltaTime)
@@ -407,6 +473,136 @@ namespace Craft
 
 			// Query 결과에 포함된 Actor는 // 밝은 빨간색 Bounding Box로 표시
 			debugRenderer.DrawWorldRect(actorDebugPosition, actorDebugSize, ColorRGB(255, 80, 80), 980);
+		}
+	}
+
+	void DebugManager::DrawArcThrowerDebug()
+	{
+		// F6가 꺼져 있으면 아무것도 하지 않음
+		if (!arcThrowerDebugEnabled)
+		{
+			return;
+		}
+
+		// 아직 Arc를 한 번도 발사하지 않았다면 표시할 Query 기록이 없음
+		if (arcQueryRecords.empty())
+		{
+			return;
+		}
+
+		DebugRenderer& debugRenderer = DebugRenderer::Get();
+
+		// Arc 한 발에서 발생한 모든 Query를 순서대로 표시
+		// record[0] = Player -> 최초 Enemy
+		// record[1] = Enemy1 -> Enemy2
+		// record[2] = Enemy2 -> Enemy3
+		// ...
+		for (const ArcQueryDebugRecord& record : arcQueryRecords)
+		{
+			// 1. 실제 Arc Target 검색 범위
+			// -------------------------------------------------------
+			const int queryLeft = static_cast<int>(std::floor(record.queryBounds.x));
+
+			const int queryTop =static_cast<int>(std::floor(record.queryBounds.y));
+
+			const int queryRight =static_cast<int>(std::ceil(record.queryBounds.GetMaxX()));
+
+			const int queryBottom =static_cast<int>(std::ceil(record.queryBounds.GetMaxY()));
+
+			const Vector2 queryPosition(queryLeft, queryTop);
+
+			const Vector2 querySize((std::max)(1, queryRight - queryLeft), (std::max)(1, queryBottom - queryTop));
+
+			// 노란색: ArcThrower가 이번 Chain 단계에서 검색한 범위
+			debugRenderer.DrawWorldRect(queryPosition, querySize, ColorRGB(240, 210, 70), 985);
+
+			// 2. QuadTree Query 탐색 과정
+			// -------------------------------------------------------
+			for (const QuadTreeQueryStep& step : record.trace)
+			{
+				const QuadTreeBounds& bounds = step.nodeBounds;
+
+				const int left = static_cast<int>(std::floor(bounds.x));
+
+				const int top = static_cast<int>(std::floor(bounds.y));
+
+				const int right = static_cast<int>(std::ceil(bounds.GetMaxX()));
+
+				const int bottom = static_cast<int>(std::ceil(bounds.GetMaxY()));
+
+				const Vector2 position(left, top);
+
+				const Vector2 size((std::max)(1, right - left), (std::max)(1, bottom - top));
+
+				switch (step.type)
+				{
+				case QuadTreeQueryStepType::VisitNode:
+					// 청록색: 실제로 탐색한 QuadTree Node
+					debugRenderer.DrawWorldRect(position, size, ColorRGB(80, 190, 210), 986);
+					break;
+
+				case QuadTreeQueryStepType::RejectNode:
+					// 어두운 빨간색: Query와 겹치지 않아 가지치기된 Node
+					debugRenderer.DrawWorldRect(position, size, ColorRGB(120, 60, 60), 986);
+					break;
+
+				case QuadTreeQueryStepType::FoundActor:
+				{
+					// QuadTree Query 중 발견된 Actor
+					const std::shared_ptr<Actor> actor = step.actor.lock();
+
+					if (!actor)
+					{
+						break;
+					}
+
+					if (!actor->IsActive())
+					{
+						break;
+					}
+
+					const Vector2F actorPosition = actor->GetPosition();
+
+					const Vector2 actorDebugPosition(
+						static_cast<int>(std::floor(actorPosition.x)),
+						static_cast<int>(std::floor(actorPosition.y)));
+
+					const Vector2 actorDebugSize(
+						(std::max)(1, actor->GetWidth()),
+						(std::max)(1, actor->GetHeight()));
+					// 보라색: Broad Phase에서 발견된 Candidate
+					debugRenderer.DrawWorldRect(actorDebugPosition, actorDebugSize, ColorRGB(190, 100, 220), 990);
+					break;
+				}
+				}
+			}
+
+			// 3. 최종 선택된 Arc Target
+			// -------------------------------------------------------
+			const std::shared_ptr<Actor> selectedTarget = record.selectedTarget.lock();
+
+			if (!selectedTarget)
+			{
+				continue;
+			}
+
+			if (!selectedTarget->IsActive())
+			{
+				continue;
+			}
+
+			const Vector2F targetPosition = selectedTarget->GetPosition();
+
+			const Vector2 targetDebugPosition(
+				static_cast<int>(std::floor(targetPosition.x)),
+				static_cast<int>(std::floor(targetPosition.y)));
+
+			const Vector2 targetDebugSize(
+				(std::max)(1, selectedTarget->GetWidth()),
+				(std::max)(1, selectedTarget->GetHeight())
+			);
+			// 밝은 초록: 거리 / 방향 / LOS 판정을 모두 통과해 실제 Chain Lightning Target으로 선택된 Actor
+			debugRenderer.DrawWorldRect(targetDebugPosition, targetDebugSize, ColorRGB(80, 255, 120), 995);
 		}
 	}
 }

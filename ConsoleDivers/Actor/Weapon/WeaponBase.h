@@ -17,7 +17,7 @@ class WeaponBase : public Craft::Actor
 	TYPE_DECLARATIONS(WeaponBase, Actor)
 
 public:
-	WeaponBase(WeaponSlotType slotType, const WeaponAmmoData& ammoData, const Craft::Vector2F& position = Craft::Vector2F::Zero);
+	WeaponBase(WeaponSlotType slotType, const WeaponAmmoData& ammoData, const WeaponCombatData& combatData, const Craft::Vector2F& position = Craft::Vector2F::Zero);
 	virtual ~WeaponBase() override = default;
 
 public:
@@ -39,6 +39,9 @@ public:
 
 	// 무기 사용 중 상태 강제 취소
 	virtual void CancelFire();
+
+	// HUD에 표시할 무기 대표 Sprite 반환
+	virtual const Craft::PixelSprite* GetHUDSprite() const { return nullptr; }
 
 	//재장전
 	void StartReload();
@@ -70,6 +73,8 @@ public:
 	// 무기 상태 반환
 	inline WeaponState GetWeaponState() const { return weaponState; }
 
+	inline bool IsInfiniteAmmo() const { return ammoData.ammoType == WeaponAmmoType::Infinite; }
+
 	// 무기가 바라볼 방향
 	inline bool IsFacingRight() const { return isFacingRight; }
 
@@ -86,6 +91,9 @@ public:
 
 	// 탄창 개수
 	inline int GetReserveMagazineCount() const { return ammoData.reserveMagazineCount; }
+
+	// 무기 기본 Damage
+	inline int GetDamage() const { return combatData.damage; }
 
 private:
 	void UpdateReload(float deltaTime);
@@ -111,9 +119,14 @@ private:
 
 	WeaponState weaponState = WeaponState::Dropped;
 
+	// 무기 탄약 정보
 	WeaponAmmoData ammoData;
 
+	// 실행 중 상태
 	WeaponRuntimeData runtimeData;
+
+	// 무기 전투 정보
+	WeaponCombatData combatData;
 
 	// 현재 무기를 들고있는 액터
 	std::weak_ptr<Craft::Actor> weaponOwner;

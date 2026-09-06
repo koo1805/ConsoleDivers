@@ -97,8 +97,21 @@ void NormalEnemy::MeleeAttack()
 		return;
 	}
 
+	// 근접 Damage 정보 생성
+	DamageInfo damageInfo;
+
+	damageInfo.damage = GetEnemyStats().attackDamage;
+
+	damageInfo.damageType = DamageType::Melee;
+
+	// 공격자는 자기 자신
+	damageInfo.damageCauser = shared_from_this();
+
+	// 일반 근접 공격은 Dive 무적을 무시하지 않음
+	damageInfo.ignoreInvincibility = false;
+
 	// 데미지 적용
-	targetCharacter->TakeDamage(GetEnemyStats().attackDamage);
+	targetCharacter->ApplyDamage(damageInfo);
 }
 
 void NormalEnemy::UpdateAttack()

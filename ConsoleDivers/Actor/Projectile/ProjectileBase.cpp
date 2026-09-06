@@ -52,7 +52,17 @@ void ProjectileBase::OnCollision(const std::shared_ptr<Actor>& other)
 	}
 
 	// 데미지
-	character->TakeDamage(damage);
+	DamageInfo damageInfo;
+
+	damageInfo.damage = damage;
+
+	damageInfo.damageType = DamageType::Projectile;
+
+	damageInfo.damageCauser = GetProjectileOwner();
+
+	damageInfo.ignoreInvincibility = false;
+
+	character->ApplyDamage(damageInfo);
 
 	// 적중 후 탄 사라짐
 	Destroy();

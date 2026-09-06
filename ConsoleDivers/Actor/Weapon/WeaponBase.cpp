@@ -3,10 +3,11 @@
 
 using namespace Craft;
 
-WeaponBase::WeaponBase(WeaponSlotType slotType, const WeaponAmmoData& ammoData, const Craft::Vector2F& position)
+WeaponBase::WeaponBase(WeaponSlotType slotType, const WeaponAmmoData& ammoData, const WeaponCombatData& combatData, const Craft::Vector2F& position)
 	: Actor(position),
 	slotType(slotType),
-	ammoData(ammoData)
+	ammoData(ammoData),
+	combatData(combatData)
 {
 	weaponState = WeaponState::Dropped;
 
@@ -74,6 +75,12 @@ void WeaponBase::ReleaseFire(const Craft::Vector2F & aimDirection)
 // Reload
 void WeaponBase::StartReload()
 {
+	// 무한 탄약 무기
+	if (IsInfiniteAmmo())
+	{
+		return;
+	}
+
 	// 이미 장전 중
 	if (runtimeData.isReloading)
 	{
@@ -204,6 +211,11 @@ bool WeaponBase::CanFire() const
 
 bool WeaponBase::ConsumeAmmo()
 {
+	if (IsInfiniteAmmo())
+	{
+		return true;
+	}
+
 	// 발사 가능한 상태가 아니라면 탄약을 소비하지 않음
 	if (!CanFire())
 	{

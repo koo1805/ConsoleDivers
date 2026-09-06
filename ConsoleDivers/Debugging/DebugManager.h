@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+#include <Algorithm/QuadTree/QuadTreeBounds.h>
+#include <Algorithm/QuadTree/QuadTreeQueryTrace.h>
+
 #include <memory>
 #include <vector>
 
@@ -17,6 +20,19 @@ namespace Craft
 
 	class DebugManager
 	{
+	private:
+		struct ArcQueryDebugRecord
+		{
+			// Query 영역
+			QuadTreeBounds queryBounds;
+
+			// QuadTree 탐색 순서
+			std::vector<QuadTreeQueryStep> trace;
+
+			// 최종 선택된 Target
+			std::weak_ptr<Actor> selectedTarget;
+		};
+
 	public:
 		static DebugManager& Get();
 
@@ -38,6 +54,18 @@ namespace Craft
 
 		// QuadTree Query 디버그 데이터 설정
 		void SetQuadTreeQueryDebugData(float x, float y, float width, float height, const std::vector<std::shared_ptr<Actor>>& queryResults);
+
+		// Arc 한 발의 Debug 데이터 수집 시작
+		void BeginArcThrowerDebugCapture();
+
+		// 하나의 QuadTree Query 기록
+		void AddArcThrowerQueryRecord(const QuadTreeBounds& queryBounds, const std::vector<QuadTreeQueryStep>& trace, const std::shared_ptr<Actor>& selectedTarget);
+
+		// Arc 한 발 Debug 데이터 수집 종료
+		void EndArcThrowerDebugCapture();
+
+		// ArcThrower 알고리즘 Debug 활성 여부
+		inline bool IsArcThrowerDebugEnabled() const { return arcThrowerDebugEnabled; }
 
 	private:
 		DebugManager() = default;
@@ -68,6 +96,9 @@ namespace Craft
 
 		// QuadTree Query 영역 및 검색 결과 표시
 		void DrawQuadTreeQueryDebug();
+
+		// 아크발사기 전용 알고리즘 시각화
+		void DrawArcThrowerDebug();
 
 	private:
 		CameraController* cameraController = nullptr;
@@ -109,5 +140,12 @@ namespace Craft
 
 		// 현재 Query 결과 Actor | DebugManager가 Actor 수명을 연장하지 않도록 weak_ptr 사용
 		std::vector<std::weak_ptr<Actor>> quadTreeQueryResults;
+
+		// F6 ArcThrower 전용 Algorithm Debug
+		bool arcThrowerDebugEnabled = false;
+
+		bool arcDebugCapturing = false;
+
+		std::vector<ArcQueryDebugRecord> arcQueryRecords;
 	};
 }

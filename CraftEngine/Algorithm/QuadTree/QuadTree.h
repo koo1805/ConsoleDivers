@@ -2,6 +2,7 @@
 
 #include <Core/Core.h>
 #include <Algorithm/QuadTree/QuadTreeBounds.h>
+#include <Algorithm/QuadTree/QuadTreeQueryTrace.h>
 
 #include <memory>
 #include <vector>
@@ -30,6 +31,11 @@ namespace Craft
 
 		// 특정 영역과 겹치는 Actor 후보 검색
 		std::vector<std::shared_ptr<Actor>> Query(const QuadTreeBounds& queryBounds) const;
+
+		// Debug 전용 Query
+		std::vector<std::shared_ptr<Actor>> QueryWithTrace(
+				const QuadTreeBounds& queryBounds,
+				std::vector<QuadTreeQueryStep>& outTrace) const;
 
 	public:
 		inline const QuadTreeNode* GetRoot() const { return root.get(); }

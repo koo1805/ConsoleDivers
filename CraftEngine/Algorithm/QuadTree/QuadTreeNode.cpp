@@ -122,6 +122,98 @@ namespace Craft
 		bottomLeft.reset();
 		bottomRight.reset();
 	}
+
+	void QuadTreeNode::QueryWithTrace(
+		const QuadTreeBounds& queryBounds,
+		std::vector<std::shared_ptr<Actor>>& results,
+		std::vector<QuadTreeQueryStep>& trace) const
+	{
+		// 현재 Node와 Query 영역이 겹치지 않음
+		// 실제 QuadTree에서는 여기서 자식 전체 탐색을 생략
+		// 해당 Step을 기록시 "가지치기" 과정을 시각화함
+		// ============================================================
+		if (!bounds.Intersects(queryBounds))
+		{
+			trace.emplace_back(
+				QuadTreeQueryStep
+				{
+					QuadTreeQueryStepType::RejectNode,
+					bounds,
+					depth,
+					std::weak_ptr<Actor>()
+				}
+			);
+
+			return;
+		}
+
+		// 이 Node는 실제 탐색 대상
+		// ============================================================
+		trace.emplace_back(
+			QuadTreeQueryStep
+			{
+				QuadTreeQueryStepType::VisitNode,
+				bounds,
+				depth,
+				std::weak_ptr<Actor>()
+			}
+		);
+
+		// 현재 Node Entry 검사
+		// ============================================================
+		for (const QuadTreeEntry& entry : entries)
+		{
+			std::shared_ptr<Actor> actor = entry.actor.lock();
+
+			if (!actor)
+			{
+				continue;
+			}
+
+			if (!actor->IsActive())
+			{
+				continue;
+			}
+
+			if (!entry.bounds.Intersects(queryBounds))
+			{
+				continue;
+			}
+
+			results.emplace_back(actor);
+
+			// Query Candidate 발견
+			// 여기서 "최종 Arc Target"이 확정된 것은 아님
+			// 거리 / Aim / LOS 검사는 ArcThrower에서 추가 수행
+			// ========================================================
+			trace.emplace_back(
+				QuadTreeQueryStep
+				{
+					QuadTreeQueryStepType::FoundActor,
+					bounds,
+					depth,
+					actor
+				}
+			);
+		}
+
+		// Leaf Node
+		if (!IsDivided())
+		{
+			return;
+		}
+
+		// 자식 Node 탐색
+		// ============================================================
+		topLeft->QueryWithTrace(queryBounds, results, trace);
+
+		topRight->QueryWithTrace(queryBounds, results, trace);
+
+		bottomLeft->QueryWithTrace(queryBounds, results, trace);
+
+		bottomRight->QueryWithTrace(queryBounds, results, trace);
+	}
+
 	bool QuadTreeNode::Subdivide()
 	{
 		// 최대 깊이에 도달

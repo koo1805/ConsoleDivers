@@ -22,7 +22,10 @@ namespace
 }
 
 Shotgun::Shotgun(const Craft::Vector2F& position)
-	: WeaponBase(WeaponSlotType::Primary, WeaponAmmoData{8, 8, 6, 6, 1.8f}, position)
+    : WeaponBase(WeaponSlotType::Primary,
+        WeaponAmmoData{ WeaponAmmoType::Finite, 8, 8, 6, 6, 1.8f },
+        WeaponCombatData{ 8 },
+        position)
 {
     rightPixel = CreateShotgunSprite();
 
@@ -73,6 +76,9 @@ void Shotgun::StartFire(const Craft::Vector2F& aimDirection)
                 projectileLifeTime,
                 false
             );
+
+        // WeaponBase의 CombatData를 실제 Projectile에 전달
+        projectile->SetDamage(GetDamage());
 
         projectile->SetProjectileOwner(owner);
     }

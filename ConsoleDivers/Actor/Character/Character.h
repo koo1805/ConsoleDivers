@@ -3,6 +3,7 @@
 #include <Actor/Actor.h>
 #include <Actor/Character/CharacterPart.h>
 #include <Actor/Character/CharacterStats.h>
+#include <Actor/Character/DamageInfo.h>
 
 #include <array>
 #include <memory>
@@ -31,11 +32,20 @@ public:
     // Character는 모든 CharacterPart를 각각 렌더
     virtual void Draw() override;
 
+    // 데미지 시스템 진입점
+    virtual bool ApplyDamage(const DamageInfo& damageInfo);
+
     // 데미지 처리
     virtual void TakeDamage(int damage);
 
     // 캐릭터가 죽었는지 반환
     bool IsDead() const;
+
+    // 현재 캐릭터 체력 반환
+    inline int GetCurrentHealth() const { return currentHealth; }
+
+    // 최대 체력 반환
+    inline int GetMaxHealth() const { return stats.maxHealth; }
 
 protected:
     // 모두 CharacterPart 포인터로 저장할 수 있게 하기 위함
@@ -59,6 +69,12 @@ protected:
     // 사망 처리
     virtual void OnDeath();
 
+    // 현재 데미지를 받을 수 있는지 판정
+    virtual bool CanReceiveDamage(const DamageInfo& damageInfo) const;
+
+    // 실제 데미지 적용 직후 호출
+    virtual void OnDamaged(const DamageInfo& damageInfo);
+
 protected:
     // Character Bounds 설정
     void SetCharacterBounds(int width, int height);
@@ -67,8 +83,6 @@ protected:
     void SetCurrentHealth(int newHealth);
 
     inline const CharacterStats& GetCharacterStats() const { return stats; }
-
-    inline int GetCurrentHealth() const { return currentHealth; }
 
 private:
     // 실제 한 부위를 Renderer에 Submit

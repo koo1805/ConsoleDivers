@@ -5,4 +5,5 @@ struct CharacterStats
 {
 	int maxHealth = 100;
 	float moveSpeed = 80.0f;
+	float maxStamina = 100.0f;
 };

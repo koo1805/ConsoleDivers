@@ -5,8 +5,12 @@
 #include <Camera/Controller/CameraController.h>
 #include <Debugging/DebugManager.h>
 #include <Actor/Player/Player.h>
+#include <Actor/Enemy/EnemyBase.h>
+#include <HUD/Manager/HUDManager.h>
 
+#include <HUD/GameHUD.h>
 #include <Actor/Weapon/Shotgun/Shotgun.h>
+#include <Actor/Weapon/ArcThrower/ArcThrower.h>
 #include <Actor/Enemy/NormalEnemy/NormalEnemy.h>
 
 #include <Test/TestBG.h>
@@ -15,6 +19,9 @@
 #include <cstdio>
 
 using namespace Craft;
+GameLevel::GameLevel() = default;
+GameLevel::~GameLevel() = default;
+
 void GameLevel::OnInitialized()
 {
 	// 부모 Level 초기화
@@ -65,13 +72,58 @@ void GameLevel::OnInitialized()
 	// NormalEnemy 생성
 	normalEnemy = SpawnActor<NormalEnemy>(navigationGrid.GridToWorld(Craft::Vector2(35, 30)));
 
+	//--------------------------------------------------------------
+	auto enemy2 =
+		SpawnActor<NormalEnemy>(
+			navigationGrid.GridToWorld(
+				Craft::Vector2(38, 30)
+			)
+		);
+
+	auto enemy3 =
+		SpawnActor<NormalEnemy>(
+			navigationGrid.GridToWorld(
+				Craft::Vector2(41, 30)
+			)
+		);
+
+	auto enemy4 =
+		SpawnActor<NormalEnemy>(
+			navigationGrid.GridToWorld(
+				Craft::Vector2(44, 30)
+			)
+		);
+	//--------------------------------------------------------------
+
 	// EnemyBase에 구현된 A* 기능이 사용할 NavigationGrid 연결
 	if (normalEnemy)
 	{
 		normalEnemy->SetNavigationGrid(&navigationGrid);
 	}
 
+	enemy2->SetNavigationGrid(
+		&navigationGrid
+	);
+
+	enemy3->SetNavigationGrid(
+		&navigationGrid
+	);
+
+	enemy4->SetNavigationGrid(
+		&navigationGrid
+	);
+
 	SpawnActor<Shotgun>(Craft::Vector2F(player->GetPosition().x + 12.0f, player->GetPosition().y));
+	std::shared_ptr<ArcThrower> arcThrower = SpawnActor<ArcThrower>(Craft::Vector2F(player->GetPosition().x + 18.0f, player->GetPosition().y));
+
+	if (arcThrower)
+	{
+		// Chain Target 탐색용
+		arcThrower->SetQuadTree(quadTree.get());
+
+		// Wall LOS 검사용
+		arcThrower->SetNavigationGrid(&navigationGrid);
+	}
 
 	cameraController = std::make_shared<Craft::CameraController>(Craft::Renderer::Get().GetCamera());
 	cameraController->SetTargetPosition(player->GetPosition());
@@ -85,6 +137,10 @@ void GameLevel::OnInitialized()
 	{
 		DebugManager::Get().SetAStarDebugData(&navigationGrid, &normalEnemy->GetPathFinder());
 	}
+
+	// Game HUD 생성
+	gameHUD = std::make_unique<GameHUD>();
+	gameHUD->Initialize(player);
 }
 
 
@@ -105,10 +161,27 @@ void GameLevel::Tick(float deltaTime)
 			quadTree->Insert(player);
 		}
 
+		const std::vector<std::shared_ptr<EnemyBase>> enemies = FindActors<EnemyBase>();
+
 		// Enemy 삽입
-		if (normalEnemy && normalEnemy->IsActive())
+		for (const auto& enemy : enemies)
 		{
-			quadTree->Insert(normalEnemy);
+			if (!enemy)
+			{
+				continue;
+			}
+
+			if (!enemy->IsActive())
+			{
+				continue;
+			}
+
+			if (enemy->IsDead())
+			{
+				continue;
+			}
+
+			quadTree->Insert(enemy);
 		}
 	}
 
@@ -171,6 +244,12 @@ void GameLevel::Tick(float deltaTime)
 	cameraController->SetTargetMoving(player->IsMoving());
 	cameraController->Tick(deltaTime);
 
+	// Player / Weapon 상태를 HUD에 반영
+	if (gameHUD) 
+	{
+		gameHUD->Update();
+	}
+
 	// 디버그 상태 변경시 업데이트
 	DebugManager::Get().Tick(deltaTime);
 }
@@ -178,6 +257,9 @@ void GameLevel::Tick(float deltaTime)
 void GameLevel::Draw()
 {
 	super::Draw();
+
+	// 게임 HUD
+	Craft::HUDManager::Get().Draw();
 
 	// 디버그 그리기 명령 생성
 	DebugManager::Get().Draw();

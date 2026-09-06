@@ -7,6 +7,7 @@
 #include <memory>
 
 // 전방 선언
+class GameHUD;
 class Player;
 class NormalEnemy;
 
@@ -19,6 +20,10 @@ namespace Craft
 class GameLevel : public Craft::Level
 {
 	TYPE_DECLARATIONS(GameLevel, Level)
+
+public:
+	GameLevel();
+	virtual ~GameLevel() override;
 
 public:
 	// 레벨 초기화
@@ -42,5 +47,8 @@ private:
 	NavigationGrid navigationGrid;
 
 	std::unique_ptr<Craft::QuadTree> quadTree;
+
+	// 게임 HUD
+	std::unique_ptr<GameHUD> gameHUD;
 };
 

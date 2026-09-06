@@ -37,7 +37,7 @@ public:
 
 	// Setter
 	inline void SetSpeed(float newSpeed) { speed = newSpeed; }
-	inline void SetDamage(int newDamage) { damage = newDamage; }
+	inline void SetDamage(int newDamage) { damage = (newDamage > 0) ? newDamage : 0; }
 
 protected:
 	virtual void Move(float deltaTime);
@@ -49,7 +49,7 @@ private:
 	Craft::Vector2F direction = Craft::Vector2F::Zero;
 
 	// 데미지
-	int damage = 10;
+	int damage = 0;
 
 	// 이동 속도
 	float speed = 0.0f;

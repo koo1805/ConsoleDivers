@@ -14,6 +14,9 @@ public:
 public:
 	virtual void StartFire(const Craft::Vector2F& aimDirection) override;
 
+	// HUD 슬롯에 표시할 Shotgun 대표 Sprite
+	virtual const Craft::PixelSprite* GetHUDSprite() const override { return &rightPixel; }
+
 protected:
 	// 방향 바뀔 때 로직
 	virtual void OnFacingChanged() override;

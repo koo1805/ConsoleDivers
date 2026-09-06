@@ -12,8 +12,11 @@
 
 using namespace Craft;
 Player::Player()
-	: Character(Craft::Vector2F(120.0f, 50.0f), CharacterStats{100, 80.0f})
+	: Character(Craft::Vector2F(120.0f, 50.0f), CharacterStats{100, 80.0f, 100.0f})
 {
+	// Spawn 시 스태미나는 최대치로 시작
+	currentStamina = GetCharacterStats().maxStamina;
+
 	sortingOrder = 10;
 
 	SetCharacterBounds(PlayerWidth, PlayerHeight);
@@ -133,6 +136,40 @@ void Player::DropWeapon()
 	ChangeWeaponSlot(WeaponSlotType::Primary);
 }
 
+void Player::DropAllWeaponsOnDeath()
+{
+	// 사망 위치
+	const Craft::Vector2F dropPosition = GetPosition();
+
+	const Craft::Vector2F primaryDropPosition(GetPosition().x - 3.0f, GetPosition().y);
+
+	const Craft::Vector2F supportDropPosition(GetPosition().x + 3.0f, GetPosition().y);
+
+	// Primary Weapon
+	// ============================================================
+	if (std::shared_ptr<WeaponBase> weapon = primaryWeapon.lock())
+	{
+		// 사망 시에는 Primary도 강제로 Drop 가능
+		weapon->Drop(primaryDropPosition);
+	}
+
+	// Player가 더 이상 해당 무기를 보유하지 않도록 참조 해제
+	primaryWeapon.reset();
+
+	// Support Weapon
+	// ============================================================
+	if (std::shared_ptr<WeaponBase> weapon = supportWeapon.lock())
+	{
+		weapon->Drop(supportDropPosition);
+	}
+
+	supportWeapon.reset();
+
+	// 다음 Spawn/Respawn 시 기본 슬롯은 Primary
+	// 지금 Player 객체가 죽은 상태에서는 실제 Weapon이 없지만 상태 자체는 기본값으로 정리
+	activeWeaponSlot = WeaponSlotType::Primary;
+}
+
 void Player::ChangeWeaponSlot(WeaponSlotType newSlot)
 {
 	// 변경할 슬롯에 실제 Weapon이 있는지 확인
@@ -224,11 +261,22 @@ void Player::BeginPlay()
 
 	// 생성 직후 주무기 슬롯에 등록
 	EquipWeapon(shotgun);
+
+	// Spawn 시 항상 1번 Primary 슬롯 선택
+	ChangeWeaponSlot(WeaponSlotType::Primary);
 }
 
 void Player::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
+
+	if (IsDead())
+	{
+		return;
+	}
+
+	// 매 프레임 Stamina 회복 처리
+	UpdateStamina(deltaTime);
 
 	// 방향키 이동이 없으면 false
 	isMoving = false;
@@ -551,6 +599,12 @@ void Player::StartDive(float xDirection, float yDirection)
 		return;
 	}
 
+	// Dive에 필요한 Stamina 부족
+	if (!ConsumeStamina(diveStaminaCost))
+	{
+		return;
+	}
+
 	// 이동 입력이 있다면 해당 이동 방향으로 Dive
 	diveDirection = Craft::Vector2F(xDirection, yDirection);
 
@@ -750,4 +804,139 @@ Craft::Vector2F Player::GetAimDirection() const
 	direction.y /= length;
 
 	return direction;
+}
+
+void Player::UpdateStamina(float deltaTime)
+{
+	const float maxStamina = GetCharacterStats().maxStamina;
+
+	// 이미 최대면 처리 필요 없음
+	if (currentStamina >= maxStamina)
+	{
+		currentStamina = maxStamina;
+
+		isStaminaRecoveryDelayed = false;
+		staminaRecoveryTimer = 0.0f;
+
+		return;
+	}
+
+	// 스태미나 소비 직후 일정 시간은 회복하지 않음
+	// ------------------------------------------------------------
+	if (isStaminaRecoveryDelayed)
+	{
+		staminaRecoveryTimer += deltaTime;
+
+		if (staminaRecoveryTimer < staminaRecoveryDelay)
+		{
+			return;
+		}
+
+		// 대기 완료
+		isStaminaRecoveryDelayed = false;
+		staminaRecoveryTimer = 0.0f;
+	}
+
+	// 초당 staminaRecoveryRate 만큼 회복
+	// ------------------------------------------------------------
+	currentStamina += staminaRecoveryRate * deltaTime;
+
+	if (currentStamina > maxStamina)
+	{
+		currentStamina = maxStamina;
+	}
+}
+
+bool Player::ConsumeStamina(float amount)
+{
+	// 잘못된 소비량
+	if (amount <= 0.0f)
+	{
+		return true;
+	}
+
+	// 필요한 스태미나가 부족하면 사용 불가
+	if (currentStamina < amount)
+	{
+		return false;
+	}
+
+	// 스태미나 소비
+	currentStamina -= amount;
+
+	// 오차 방지
+	if (currentStamina < 0.0f)
+	{
+		currentStamina = 0.0f;
+	}
+
+	// 스태미나를 사용한 순간부터 회복 지연 시작
+	// ------------------------------------------------------------
+	isStaminaRecoveryDelayed = true;
+
+	staminaRecoveryTimer = 0.0f;
+
+	return true;
+}
+
+bool Player::CanReceiveDamage(
+	const DamageInfo& damageInfo) const
+{
+	// 이미 죽은 상태 등을 먼저 확인
+	if (!super::CanReceiveDamage(damageInfo))
+	{
+		return false;
+	}
+
+	// 무적을 강제로 무시하는 Damage라면 허용
+	// 일반 Enemy 공격은 false이므로 여기에 해당하지 않음
+	if (damageInfo.ignoreInvincibility)
+	{
+		return true;
+	}
+
+	// Dive 무적 중에는 Damage 무효
+	if (isInvincible)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void Player::OnDamaged(const DamageInfo& damageInfo)
+{
+	super::OnDamaged(damageInfo);
+
+	// - 피격 Flash
+	// - 짧은 경직
+	// - 화면 흔들림
+	// - 피격 Sound
+}
+
+void Player::OnDeath()
+{
+	super::OnDeath();
+
+	// 죽은 상태에서는 충돌 대상에서 제외
+	SetCollisionMask(Craft::CollisionMaskNone);
+
+	// Dive 상태 종료 > 동 상태 초기화
+	isDiving = false;
+
+	isInvincible = false;
+
+	diveTimer = 0.0f;
+	invincibleTimer = 0.0f;
+
+	// 현재 무기 사용 중단
+	if (std::shared_ptr<WeaponBase> weapon = GetEquippedWeapon())
+	{
+		weapon->CancelFire();
+	}
+
+	// Weapon 전부 Drop
+	DropAllWeaponsOnDeath();
+
+	// 실제 사망 애니메이션 / Respawn은 Player Death/Respawn 시스템에서 담당
 }

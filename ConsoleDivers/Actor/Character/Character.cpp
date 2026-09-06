@@ -27,28 +27,57 @@ void Character::Draw()
     }
 }
 
-void Character::TakeDamage(int damage)
+bool Character::ApplyDamage(
+    const DamageInfo& damageInfo)
 {
-    // 예외 처리
-    if (damage <= 0)
+    // 잘못된 데미지
+    if (damageInfo.damage <= 0)
     {
-        return;
+        return false;
     }
 
+    // 이미 죽은 Character
     if (IsDead())
     {
-        return;
+        return false;
     }
 
-    // 체력 처리
-    currentHealth -= damage;
+    // Character별 데미지 수신 가능 여부
+    // Player Dive 무적 등이 여기에서 차단
+    if (!CanReceiveDamage(damageInfo))
+    {
+        return false;
+    }
 
-    if (currentHealth <= 0)
+    // 실제 HP 감소
+    currentHealth -= damageInfo.damage;
+
+    if (currentHealth < 0)
     {
         currentHealth = 0;
+    }
 
+    // 피격 후 처리
+    // 아직은 비어있지만 나중에 피격 애니메이션 / 화면 점멸 / KnockBack 등에 사용
+    OnDamaged(damageInfo);
+
+    // 사망
+    if (currentHealth == 0)
+    {
         OnDeath();
     }
+
+    return true;
+}
+
+void Character::TakeDamage(int damage)
+{
+    DamageInfo damageInfo;
+
+    damageInfo.damage = damage;
+    damageInfo.damageType = DamageType::None;
+
+    ApplyDamage(damageInfo);
 }
 
 bool Character::IsDead() const
@@ -173,6 +202,15 @@ void Character::OnDeath()
 {
 
 }
+
+bool Character::CanReceiveDamage(const DamageInfo& damageInfo) const
+{
+    //살아있으면 Damage를 받음
+    return !IsDead();
+}
+
+void Character::OnDamaged(const DamageInfo& damageInfo)
+{}
 
 // Actor와 기존 카메라/월드 Bounds 시스템 호환용
 void Character::SetCharacterBounds(int width, int height)

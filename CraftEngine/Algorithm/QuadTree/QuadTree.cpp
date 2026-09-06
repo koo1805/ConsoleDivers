@@ -78,6 +78,23 @@ namespace Craft
 		return results;
 	}
 
+	std::vector<std::shared_ptr<Actor>> QuadTree::QueryWithTrace(const QuadTreeBounds& queryBounds, std::vector<QuadTreeQueryStep>& outTrace) const
+	{
+		std::vector<std::shared_ptr<Actor>> results;
+
+		// 기존 Trace 제거
+		outTrace.clear();
+
+		if (!root)
+		{
+			return results;
+		}
+
+		root->QueryWithTrace(queryBounds, results, outTrace);
+
+		return results;
+	}
+
 	QuadTreeBounds QuadTree::BuildActorBounds(const std::shared_ptr<Actor>& actor) const
 	{
 		if (!actor)

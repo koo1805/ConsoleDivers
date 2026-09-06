@@ -212,5 +212,8 @@
     <ClInclude Include="HUD\Manager\HUDManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Algorithm\QuadTree\QuadTreeQueryTrace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

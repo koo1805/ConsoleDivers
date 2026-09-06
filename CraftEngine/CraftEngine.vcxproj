@@ -140,6 +140,7 @@ xcopy ..\Config\* $(OutDir)..\Config\ /e /y /i</Command>
     <ClInclude Include="Algorithm\QuadTree\QuadTree.h" />
     <ClInclude Include="Algorithm\QuadTree\QuadTreeBounds.h" />
     <ClInclude Include="Algorithm\QuadTree\QuadTreeNode.h" />
+    <ClInclude Include="Algorithm\QuadTree\QuadTreeQueryTrace.h" />
     <ClInclude Include="Camera\Camera.h" />
     <ClInclude Include="Camera\Controller\CameraController.h" />
     <ClInclude Include="Core\Core.h" />

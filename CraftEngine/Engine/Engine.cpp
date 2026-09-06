@@ -272,7 +272,7 @@ namespace Craft
 		}
 
 		/*/
-		if (Input::Get().GetKeyDown(VK_F6))
+		if (Input::Get().GetKeyDown(VK_F9))
 		{
 			collisionSystem->ToggleBroadPhaseMode();
 
@@ -285,7 +285,7 @@ namespace Craft
 			OutputDebugStringA(buffer);
 		}
 
-		if (Input::Get().GetKeyDown(VK_F7))
+		if (Input::Get().GetKeyDown(VK_F10))
 		{
 			const bool enabled = !collisionSystem->IsPairValidationEnabled();
 

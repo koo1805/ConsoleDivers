@@ -23,6 +23,9 @@ public:
 
 	bool IsWalkable(const Craft::Vector2& gridPosition) const;
 
+	// 두 World 위치 사이에 이동 불가능한 Grid Cell이 존재하는지 검사
+	bool HasLineOfSight(const Craft::Vector2F& startWorldPosition, const Craft::Vector2F& endWorldPosition) const;
+
 	// 좌표 변환
 	// 월드 -> 그리드
 	Craft::Vector2 WorldToGrid(const Craft::Vector2F& worldPosition) const;
