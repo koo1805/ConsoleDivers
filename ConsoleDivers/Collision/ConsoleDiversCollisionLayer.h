@@ -16,6 +16,8 @@ namespace GameCollision
 
 	constexpr Craft::CollisionLayer World = Craft::CollisionLayer::Layer5;
 
+	constexpr Craft::CollisionLayer StratagemBeacon = Craft::CollisionLayer::Layer6;
+
 
 	// Layer를 Mask로 변환하기 쉽게 사용하는 함수
 	constexpr Craft::CollisionMask Mask(Craft::CollisionLayer layer)

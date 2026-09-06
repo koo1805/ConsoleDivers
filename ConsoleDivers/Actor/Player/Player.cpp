@@ -6,6 +6,7 @@
 #include <Collision/ConsoleDiversCollisionLayer.h>
 #include <Actor/Weapon/WeaponBase.h>
 #include <Actor/Weapon/Shotgun/Shotgun.h>
+#include <Stratagem/Beacon/StratagemBeacon.h>
 
 #include <memory>
 #include <cmath>
@@ -333,34 +334,73 @@ void Player::Tick(float deltaTime)
 		DropWeapon();
 	}
 
+	// 스트라타젬 입력 처리
+	// WASD 이동 방향 계산이 끝난 뒤 호출하지만 Player 이동 자체를 차단하지 않음
+	// 따라서 Ctrl + 방향키를 입력하는 동안에도 WASD를 이용해 계속 이동 가능
+	// ============================================================
+	stratagemSystem.Update(deltaTime);
+
+	// 무기 사용중 진입시
+	// 스트라타젬 커맨드 입력 도중 무기를 사용하면 스트라타젬 입력 취소
+	// 주의: 취소만 하고 return하지 않음
+	// 사용자가 무기를 사용하려고 했으므로 Weapon 입력 자체는 그대로 실행
+	// ============================================================
+	if (stratagemSystem.IsInputting() && Input::Get().GetKey(VK_LBUTTON))
+	{
+		stratagemSystem.CancelInput();
+	}
+
 	const Craft::Vector2F aimDirection = GetAimDirection();
 	std::shared_ptr<WeaponBase> activeWeapon = GetEquippedWeapon();
 
-	// 발사
-	if (activeWeapon)
+	Input& input = Input::Get();
+
+	// 이번 프레임에 무기를 사용하려고 했는지
+	const bool firePressed = input.GetKeyDown(VK_LBUTTON);
+
+	// 모든 스트라타젬 입력 완료 상태
+	// ============================================================
+	if (stratagemSystem.IsReadyToThrow())
 	{
-		// 마우스를 처음 누른 순간
-		if (Input::Get().GetKeyDown(VK_LBUTTON))
+		// ReadyToThrow 상태에서는 무기 발사 X
+		// 대신 실제 StratagemBeacon을 생성해서 마우스 방향으로 투척
+		// --------------------------------------------------------
+		if (firePressed)
 		{
-			activeWeapon->StartFire(aimDirection);
+			ThrowStratagemBeacon(aimDirection);
 		}
 
-		// 누르고 있는 동안
-		if (Input::Get().GetKey(VK_LBUTTON))
+		// ReadyToThrow에서는 아래 Weapon Fire 블록을 실행하지 않는다.
+	}
+	else
+	{
+		// 기존 Weapon 입력
+		// ========================================================
+		if (activeWeapon)
 		{
-			activeWeapon->UpdateFire(deltaTime, aimDirection);
-		}
+			// 마우스를 처음 누른 순간
+			if (input.GetKeyDown(VK_LBUTTON))
+			{
+				activeWeapon->StartFire(aimDirection);
+			}
 
-		// 마우스를 놓은 순간
-		if (Input::Get().GetKeyUp(VK_LBUTTON))
-		{
-			activeWeapon->ReleaseFire(aimDirection);
-		}
+			// 마우스를 누르고 있는 동안
+			if (input.GetKey(VK_LBUTTON))
+			{
+				activeWeapon->UpdateFire(deltaTime, aimDirection);
+			}
 
-		// R : 장전
-		if (Input::Get().GetKeyDown('R'))
-		{
-			activeWeapon->StartReload();
+			// 마우스를 놓은 순간
+			if (input.GetKeyUp(VK_LBUTTON))
+			{
+				activeWeapon->ReleaseFire(aimDirection);
+			}
+
+			// R : 장전
+			if (input.GetKeyDown('R'))
+			{
+				activeWeapon->StartReload();
+			}
 		}
 	}
 
@@ -879,8 +919,64 @@ bool Player::ConsumeStamina(float amount)
 	return true;
 }
 
-bool Player::CanReceiveDamage(
-	const DamageInfo& damageInfo) const
+void Player::ThrowStratagemBeacon(const Craft::Vector2F& direction)
+{
+	// ReadyToThrow 상태에서만 실제 비콘 생성 가능
+	if (!stratagemSystem.IsReadyToThrow())
+	{
+		return;
+	}
+
+	// 방향이 없는 경우
+	// 마우스가 Player 정확한 중심에 있는 등의 상황에서 Zero 방향으로 생성되는 것을 방지
+	if (direction == Craft::Vector2F::Zero)
+	{
+		return;
+	}
+
+	// 현재 Player가 속한 Level
+	std::shared_ptr<Craft::Level> level = GetOwner();
+
+	if (!level)
+	{
+		return;
+	}
+
+	// 투척 시작 위치
+	// Player의 좌상단 위치 그대로 생성하면 캐릭터 몸 내부에서 시작하므로 중심 기준으로 계산
+	const Craft::Vector2F playerCenter(
+		GetPosition().x + static_cast<float>(GetWidth()) * 0.5f,
+		GetPosition().y + static_cast<float>(GetHeight()) * 0.5f);
+
+	// Player 몸에서 약간 앞쪽에서 비콘 시작
+	// 캐릭터와 시각적으로 겹치는 것을 줄임
+	constexpr float spawnForwardOffset = 4.0f;
+
+	const Craft::Vector2F spawnPosition = playerCenter + direction * spawnForwardOffset;
+
+	const StratagemData* matchedStratagem = stratagemSystem.GetMatchedStratagem();
+
+	if (!matchedStratagem)
+	{
+		return;
+	}
+
+	// 실제 비콘 Actor 생성
+	std::shared_ptr<StratagemBeacon> beacon = level->SpawnActor<StratagemBeacon>(spawnPosition, direction, *matchedStratagem);
+
+	// 생성 실패 시 Ready 상태 유지
+	// 다시 투척할 수 있도록 Reset하지 않음
+	if (!beacon)
+	{
+		return;
+	}
+
+	// 실제 Beacon 생성 성공
+	// 현재 커맨드로 매칭됐던 Stratagem만 독립 Cooldown 시작
+	stratagemSystem.ConsumeMatchedStratagem();
+}
+
+bool Player::CanReceiveDamage(const DamageInfo& damageInfo) const
 {
 	// 이미 죽은 상태 등을 먼저 확인
 	if (!super::CanReceiveDamage(damageInfo))

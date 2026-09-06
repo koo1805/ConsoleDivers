@@ -11,6 +11,8 @@ class GameHUD;
 class Player;
 class NormalEnemy;
 
+class ArcThrower;
+
 namespace Craft
 {
 	class TestBG;
@@ -34,6 +36,8 @@ public:
 
 	// 화면 그리기
 	virtual void Draw() override;
+
+	void InitializeArcThrower(const std::shared_ptr<ArcThrower>& arcThrower);
 
 private:
 	std::shared_ptr<Player> player;

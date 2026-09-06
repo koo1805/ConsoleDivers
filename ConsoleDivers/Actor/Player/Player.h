@@ -4,11 +4,13 @@
 #include <Actor/Player/Sprite/PlayerVisual.h>
 #include <Actor/Player/Animation/PlayerAnimator.h>
 #include <Actor/Weapon/Data/WeaponData.h>
+#include <Stratagem/StratagemSystem.h>
 
 #include <memory>
 
 // 전방 선언
 class WeaponBase;
+class StratagemBeacon;
 
 class Player : public Character
 {
@@ -37,6 +39,9 @@ public:
 
 	// 현재 Dive 가능 여부
 	inline bool CanDive() const { return currentStamina >= diveStaminaCost; }
+
+	// 현재 Player의 스트라타젬 시스템 반환
+	inline const StratagemSystem& GetStratagemSystem() const { return stratagemSystem; }
 
 	// 무기 장착
 	void EquipWeapon(const std::shared_ptr<WeaponBase>& weapon);
@@ -104,6 +109,9 @@ private:
 	// 스태미나 소비
 	bool ConsumeStamina(float amount);
 
+	// 스트라타젬 입력 완료 후 마우스 방향으로 비콘 투척
+	void ThrowStratagemBeacon(const Craft::Vector2F& direction);
+
 protected:
 	// Player Damage 판정
 	// Dive 무적 상태라면 일반 Damage를 차단
@@ -157,6 +165,9 @@ private:
 	PlayerVisual visual;
 
 	PlayerAnimator animator;
+
+	// Player 스트라타젬 입력 / 상태 관리
+	StratagemSystem stratagemSystem;
 
 	// 기존 Player의 전체 크기 유지
 	// Character가 여러 Sprite로 분리되더라도 = 카메라 / 월드 Bounds 계산에서는 기존 9 x 15 크기로 동작

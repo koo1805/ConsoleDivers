@@ -116,14 +116,7 @@ void GameLevel::OnInitialized()
 	SpawnActor<Shotgun>(Craft::Vector2F(player->GetPosition().x + 12.0f, player->GetPosition().y));
 	std::shared_ptr<ArcThrower> arcThrower = SpawnActor<ArcThrower>(Craft::Vector2F(player->GetPosition().x + 18.0f, player->GetPosition().y));
 
-	if (arcThrower)
-	{
-		// Chain Target 탐색용
-		arcThrower->SetQuadTree(quadTree.get());
-
-		// Wall LOS 검사용
-		arcThrower->SetNavigationGrid(&navigationGrid);
-	}
+	InitializeArcThrower(arcThrower);
 
 	cameraController = std::make_shared<Craft::CameraController>(Craft::Renderer::Get().GetCamera());
 	cameraController->SetTargetPosition(player->GetPosition());
@@ -263,4 +256,18 @@ void GameLevel::Draw()
 
 	// 디버그 그리기 명령 생성
 	DebugManager::Get().Draw();
+}
+
+void GameLevel::InitializeArcThrower(const std::shared_ptr<ArcThrower>& arcThrower)
+{
+	if (!arcThrower)
+	{
+		return;
+	}
+
+	// ArcThrower의 Chain Lightning 첫 타겟 검색용
+	arcThrower->SetQuadTree(quadTree.get());
+
+	// ArcThrower의 벽 통과 방지 LOS 검사용
+	arcThrower->SetNavigationGrid(&navigationGrid);
 }

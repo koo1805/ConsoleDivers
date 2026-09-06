@@ -102,6 +102,18 @@
     <ClCompile Include="Actor\Weapon\ArcThrower\Effect\ArcEffect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Stratagem\StratagemSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Stratagem\Beacon\StratagemBeacon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Stratagem\Hellpod\Hellpod.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HUD\Stratagem\StratagemHUD.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Level\GameLevel.h">
@@ -210,6 +222,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HUD\HUDLayoutContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Stratagem\StratagemSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Stratagem\Data\StratagemData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Stratagem\Beacon\StratagemBeacon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Stratagem\Hellpod\Hellpod.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HUD\Stratagem\StratagemHUD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
