@@ -156,19 +156,31 @@ namespace Craft
 		arcDebugCapturing = true;
 	}
 
-	void DebugManager::AddArcThrowerQueryRecord(const QuadTreeBounds& queryBounds, const std::vector<QuadTreeQueryStep>& trace, const std::shared_ptr<Actor>& selectedTarget)
+	void DebugManager::AddArcThrowerQueryRecord(
+		const Vector2F& sourcePosition,
+		const Vector2F& targetPosition,
+		const QuadTreeBounds& queryBounds,
+		const std::vector<QuadTreeQueryStep>& trace,
+		const std::shared_ptr<Actor>& selectedTarget)
 	{
 		if (!arcThrowerDebugEnabled)
 		{
 			return;
 		}
 
+		// 현재 Arc 한 발을 수집 중이 아니면 기록하지 않음
 		if (!arcDebugCapturing)
 		{
 			return;
 		}
 
 		ArcQueryDebugRecord record;
+
+		// 이번 Query가 어디서 시작됐는지 저장
+		record.sourcePosition = sourcePosition;
+
+		// 실제 Arc Target 중심점
+		record.targetPosition = targetPosition;
 
 		record.queryBounds = queryBounds;
 
@@ -591,16 +603,31 @@ namespace Craft
 				continue;
 			}
 
-			const Vector2F targetPosition = selectedTarget->GetPosition();
+			const Vector2F actorPosition = selectedTarget->GetPosition();
 
 			const Vector2 targetDebugPosition(
-				static_cast<int>(std::floor(targetPosition.x)),
-				static_cast<int>(std::floor(targetPosition.y)));
+				static_cast<int>(std::floor(actorPosition.x)),
+				static_cast<int>(std::floor(actorPosition.y)));
 
 			const Vector2 targetDebugSize(
 				(std::max)(1, selectedTarget->GetWidth()),
 				(std::max)(1, selectedTarget->GetHeight())
 			);
+
+			// 4. 실제 선택된 Arc 연결선
+			// -------------------------------------------------------
+			const Vector2 sourceLinePosition(
+				static_cast<int>(std::round(record.sourcePosition.x)),
+				static_cast<int>(std::round(record.sourcePosition.y)));
+
+			const Vector2 targetLinePosition(
+				static_cast<int>(std::round(record.targetPosition.x)),
+				static_cast<int>(std::round(record.targetPosition.y)));
+
+			// 밝은 Cyan
+			// LOS / Range / Aim 검사를 모두 통과한 실제 Arc 연결
+			debugRenderer.DrawWorldLine(sourceLinePosition, targetLinePosition, ColorRGB(100, 230, 255),993);
+
 			// 밝은 초록: 거리 / 방향 / LOS 판정을 모두 통과해 실제 Chain Lightning Target으로 선택된 Actor
 			debugRenderer.DrawWorldRect(targetDebugPosition, targetDebugSize, ColorRGB(80, 255, 120), 995);
 		}

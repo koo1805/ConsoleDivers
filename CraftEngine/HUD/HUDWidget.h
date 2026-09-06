@@ -45,7 +45,7 @@ namespace Craft
 		inline void SetSortingOrder(int newSortingOrder) { sortingOrder = newSortingOrder; }
 
 	protected:
-		// 화면 기준 위치
+		// 실제 화면에 그려질 최종 위치
 		Vector2 position = Vector2::Zero;
 
 		// HUD 영역 크기

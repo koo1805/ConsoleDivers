@@ -182,14 +182,15 @@ namespace Craft
 	// static 변수 초기화
 	Renderer* Renderer::instance = nullptr;
 
-	Renderer::Renderer(const Vector2& screenSize)
+	Renderer::Renderer(const Vector2& screenSize, const Vector2& viewportSize)
 		: screenSize(screenSize)
 	{
 		// Renderer는 하나만 존재해야 함
 		assert(!instance && "instance should be null");
 		instance = this;
 
-		camera = std::make_unique<Camera>(screenSize);
+		// Camera는 전체 Screen이 아니라 실제 게임 월드를 표시할 Viewport 크기를 사용
+		camera = std::make_unique<Camera>(viewportSize);
 
 		// 전체 Cell개수
 		const int bufferCount = screenSize.x * screenSize.y;
@@ -670,8 +671,10 @@ namespace Craft
 		// 월드 좌표를 화면 좌표로 변환
 		const Vector2 screenPosition = camera->WorldToScreen(Vector2F(static_cast<float>(command.position.x), static_cast<float>(command.position.y)));
 
+		const Vector2 viewportSize = camera->GetViewportSize();
+
 		// y 위치가 화면을 벗어났으면 건너뛰기
-		if (screenPosition.y < 0 || screenPosition.y >= screenSize.y)
+		if (screenPosition.y < 0 || screenPosition.y >= viewportSize.y)
 		{
 			return;
 		}
@@ -686,7 +689,7 @@ namespace Craft
 		const int endX = startX + length - 1;
 
 		// x 위치가 화면을 벗어났는지 확인
-		if (endX < 0 || startX >= screenSize.x)
+		if (endX < 0 || startX >= viewportSize.x)
 		{
 			return;
 		}
@@ -694,7 +697,7 @@ namespace Craft
 		// 실제 그릴 글자의 위치 구하기
 		// 삼항 연산자
 		const int visibleStart = startX < 0 ? 0 : startX;
-		const int visibleEnd = endX >= screenSize.x ? screenSize.x - 1 : endX;
+		const int visibleEnd = endX >= viewportSize.x ? viewportSize.x - 1 : endX;
 
 		// 문자열을 루프 순회하면서 Cell단위로 처리
 		for (int x = visibleStart; x <= visibleEnd; ++x)
@@ -746,6 +749,8 @@ namespace Craft
 			command.screenSpace
 				? command.position : camera->WorldToScreen(Vector2F(static_cast<float>(command.position.x), static_cast<float>(command.position.y)));
 
+		const Vector2 renderAreaSize = command.screenSpace ? screenSize : camera->GetViewportSize();
+
 		// 검사 변수
 		const int spriteLeft = screenPosition.x;
 		const int spriteRight = screenPosition.x + sprite.GetWidth() - 1;
@@ -754,7 +759,7 @@ namespace Craft
 		const int spriteBottom = screenPosition.y + sprite.GetHeight() - 1;
 		
 		// Sprite 전체가 화면 밖인지 검사
-		if (spriteRight < 0 || spriteLeft >= screenSize.x || spriteBottom < 0 || spriteTop >= screenSize.y)
+		if (spriteRight < 0 || spriteLeft >= renderAreaSize.x || spriteBottom < 0 || spriteTop >= renderAreaSize.y)
 		{
 			return;
 		}
@@ -774,9 +779,9 @@ namespace Craft
 		}
 		
 		// Sprite 오른쪽 검사
-		if (screenPosition.x + endX > screenSize.x)
+		if (screenPosition.x + endX > renderAreaSize.x)
 		{
-			endX = screenSize.x - screenPosition.x;
+			endX = renderAreaSize.x - screenPosition.x;
 		}
 
 		// Sprite 위쪽 검사
@@ -786,9 +791,9 @@ namespace Craft
 		}
 
 		// Sprite 아래쪽 검사
-		if (screenPosition.y + endY > screenSize.y)
+		if (screenPosition.y + endY > renderAreaSize.y)
 		{
-			endY = screenSize.y - screenPosition.y;
+			endY = renderAreaSize.y - screenPosition.y;
 		}
 
 		// 화면에 보이는 셀만 순회

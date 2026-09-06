@@ -1,4 +1,5 @@
 ﻿#include "NavigationGrid.h"
+#include <Math/Vector2F.h>
 
 #include <algorithm>
 #include <cmath>
@@ -171,6 +172,116 @@ bool NavigationGrid::HasLineOfSight(const Craft::Vector2F& startWorldPosition, c
 	}
 
 	return true;
+}
+
+Craft::Vector2F NavigationGrid::GetLineEndBeforeWall(const Craft::Vector2F& startPosition, const Craft::Vector2F& direction, float maxDistance) const
+{
+	// 1. Direction 정규화
+	// ------------------------------------------------------------
+	const float directionLength = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+
+	// 방향이 없는 경우 시작 위치 그대로 반환
+	if (directionLength <= 0.0001f)
+	{
+		return startPosition;
+	}
+
+	const Craft::Vector2F normalizedDirection(direction.x / directionLength, direction.y / directionLength);
+
+	// 2. 최대 사거리 끝점 계산
+	// ------------------------------------------------------------
+	const Craft::Vector2F maxEndPosition(startPosition.x + normalizedDirection.x * maxDistance, startPosition.y + normalizedDirection.y * maxDistance);
+
+	// 3. 시작 Grid Cell 계산
+	// ------------------------------------------------------------
+	Craft::Vector2 currentGrid = WorldToGrid(startPosition);
+
+	const Craft::Vector2 endGrid = WorldToGrid(maxEndPosition);
+
+	// 시작 Cell 자체가 막혀 있다면 진행 불가
+	if (!IsWalkable(currentGrid))
+	{
+		return startPosition;
+	}
+
+	// 4. Grid Traversal 준비
+	// ------------------------------------------------------------
+	const float deltaX = maxEndPosition.x - startPosition.x;
+	const float deltaY = maxEndPosition.y - startPosition.y;
+
+	const int stepX = (deltaX > 0.0f) ? 1 : (deltaX < 0.0f) ? -1 : 0;
+	const int stepY = (deltaY > 0.0f) ? 1 : (deltaY < 0.0f) ? -1 : 0;
+
+	constexpr float infinity = std::numeric_limits<float>::infinity();
+
+	const float cellSizeFloat = static_cast<float>(cellSize);
+
+	const float tDeltaX = (stepX != 0) ? cellSizeFloat / std::abs(deltaX) : infinity;
+	const float tDeltaY = (stepY != 0) ? cellSizeFloat / std::abs(deltaY) : infinity;
+
+	// 현재 위치에서 다음 X/Y Grid 경계까지 도달하는 비율
+	float tMaxX = infinity;
+	float tMaxY = infinity;
+
+	if (stepX != 0)
+	{
+		const float nextGridBoundaryX = (stepX > 0) ? static_cast<float>((currentGrid.x + 1) * cellSize) : static_cast<float>(currentGrid.x * cellSize);
+
+		tMaxX = (nextGridBoundaryX - startPosition.x) / deltaX;
+	}
+
+	if (stepY != 0)
+	{
+		const float nextGridBoundaryY = (stepY > 0) ? static_cast<float>((currentGrid.y + 1) * cellSize) : static_cast<float>(currentGrid.y * cellSize);
+
+		tMaxY = (nextGridBoundaryY - startPosition.y) / deltaY;
+	}
+
+	Craft::Vector2 previousGrid = currentGrid;
+
+	while (currentGrid != endGrid)
+	{
+		previousGrid = currentGrid;
+
+		if (tMaxX < tMaxY)
+		{
+			currentGrid.x += stepX;
+
+			tMaxX += tDeltaX;
+		}
+		else if (tMaxY < tMaxX)
+		{
+			currentGrid.y += stepY;
+
+			tMaxY += tDeltaY;
+		}
+		else
+		{
+			currentGrid.x += stepX;
+			currentGrid.y += stepY;
+
+			tMaxX += tDeltaX;
+			tMaxY += tDeltaY;
+		}
+
+		// NavigationGrid 범위를 벗어났다면 마지막 유효 Cell까지만 Arc를 표시
+		if (!IsValidGridPosition(currentGrid))
+		{
+			return GridToWorld(previousGrid);
+		}
+
+		// 벽 발견
+		// --------------------------------------------------------
+		if (!IsWalkable(currentGrid))
+		{
+			// 벽 Cell 자체까지 들어가지 않고
+			// 이전 Cell의 중심을 Arc 끝점으로 사용
+			return GridToWorld(previousGrid);
+		}
+	}
+
+	// 벽 없이 끝까지 도달했다면 최대 사거리 위치
+	return maxEndPosition;
 }
 
 Craft::Vector2 NavigationGrid::WorldToGrid(const Craft::Vector2F& worldPosition) const

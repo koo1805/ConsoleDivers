@@ -53,7 +53,7 @@ namespace Craft
 		};
 
 	public:
-		Renderer(const Vector2& screenSize);
+		Renderer(const Vector2& screenSize, const Vector2& viewportSize);
 		~Renderer();
 
 		// 화면에 그릴 데이터를 제출(전달)하는 함수
@@ -95,6 +95,9 @@ namespace Craft
 
 		// 카메라 접근 함수
 		Camera& GetCamera();
+
+		// HUD까지 포함한 전체 출력 영역
+		inline const Vector2& GetScreenSize() const { return screenSize; }
 
 	private:
 		// 그리기 작업을 시작할 때 화면 버퍼를 초기화하는 함수

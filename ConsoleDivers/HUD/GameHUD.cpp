@@ -1,5 +1,7 @@
 ﻿#include "GameHUD.h"
-
+#include <Render/Renderer.h>
+#include <Camera/Camera.h>
+#include <HUD/HUDLayoutContext.h>
 #include <HUD/Canvas/HUDCanvas.h>
 #include <HUD/Manager/HUDManager.h>
 #include <HUD/Equipment/WeaponSlotHUD.h>
@@ -44,6 +46,9 @@ void GameHUD::Initialize(const std::shared_ptr<Player>& player)
 	playerStatusHUD = std::make_unique<PlayerStatusHUD>();
 	playerStatusHUD->Initialize(canvas, player);
 
+	// HUD 최종 위치 계산
+	UpdateLayout();
+
 	// 엔진 HUDManager에 Game Canvas 등록
 	Craft::HUDManager::Get().AddCanvas(canvas);
 }
@@ -66,7 +71,30 @@ void GameHUD::Update()
 	}
 }
 
-void GameHUD::Draw()
+void GameHUD::UpdateLayout()
 {
+	Craft::Renderer& renderer = Craft::Renderer::Get();
 
+	HUDLayoutContext context;
+
+	// HUD 포함 전체 출력 영역
+	context.screenSize = renderer.GetScreenSize();
+
+	// 게임 월드 전용 영역
+	context.viewportSize = renderer.GetCamera().GetViewportSize();
+
+	if (weaponSlotHUD)
+	{
+		weaponSlotHUD->UpdateLayout(context);
+	}
+
+	if (ammoHUD)
+	{
+		ammoHUD->UpdateLayout(context);
+	}
+
+	if (playerStatusHUD)
+	{
+		playerStatusHUD->UpdateLayout(context);
+	}
 }

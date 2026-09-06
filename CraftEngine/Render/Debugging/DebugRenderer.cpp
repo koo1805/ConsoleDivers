@@ -3,6 +3,8 @@
 #include <Render/Cell.h>
 #include <Render/Sprite/PixelSprite.h>
 
+#include <cstdlib>
+
 namespace Craft
 {
 	void DebugRenderer::BeginFrame()
@@ -78,6 +80,64 @@ namespace Craft
 			if (size.x > 1)
 			{
 				FillWorldRect(Vector2(position.x + size.x - 1, position.y + 1), Vector2(1, size.y - 2), color, sortingOrder);
+			}
+		}
+	}
+
+	void DebugRenderer::DrawWorldLine(const Vector2& start, const Vector2& end, const ColorRGB& color, int sortingOrder)
+	{
+		// Bresenham Line Algorithm
+		// float 연산 없이 정수 World Cell들을 따라가면서 시작점과 끝점 사이에 선을 생성
+
+		int x0 = start.x;
+		int y0 = start.y;
+
+		const int x1 = end.x;
+		const int y1 = end.y;
+
+		// X 방향 이동 거리
+		const int deltaX = std::abs(x1 - x0);
+
+		// X 방향 이동 방향
+		const int stepX = (x0 < x1) ? 1 : -1;
+
+		// Y 방향 이동 거리
+		// Bresenham 계산식에서 음수 값으로 사용
+		const int deltaY = -std::abs(y1 - y0);
+
+		// Y 방향 이동 방향
+		const int stepY = (y0 < y1) ? 1 : -1;
+
+		// 현재 오차 값
+		int error = deltaX + deltaY;
+
+		while (true)
+		{
+			// 현재 World 위치에 1x1 Debug Cell 생성
+			FillWorldRect(Vector2(x0, y0), Vector2(1, 1), color, sortingOrder);
+
+			// 끝점에 도달
+			if (x0 == x1 && y0 == y1)
+			{
+				break;
+			}
+
+			const int doubledError = error * 2;
+
+			// X 방향 이동 여부
+			if (doubledError >= deltaY)
+			{
+				error += deltaY;
+
+				x0 += stepX;
+			}
+
+			// Y 방향 이동 여부
+			if (doubledError <= deltaX)
+			{
+				error += deltaX;
+
+				y0 += stepY;
 			}
 		}
 	}

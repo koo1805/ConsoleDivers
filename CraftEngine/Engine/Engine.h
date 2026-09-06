@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <Core/Core.h>
+#include <Math/Vector2.h>
 #include <memory>	// 스마트 포인터 사용을 위해
 #include <string>
 
@@ -31,6 +32,10 @@ namespace Craft
 
 			// 사용할 콘솔 화면 높이
 			int height = 0;
+
+			// 실제 게임 월드를 출력할 Viewport 크기
+			int viewportWidth = 0;
+			int viewportHeight = 0;
 		};
 
 	public:
@@ -66,6 +71,11 @@ namespace Craft
 		// Getter
 		inline int GetWidth() const { return setting.width; }
 		inline int GetHeight() const { return setting.height; }
+		inline int GetViewportWidth() const { return setting.viewportWidth; }
+		inline int GetViewportHeight() const { return setting.viewportHeight; }
+
+		inline Vector2 GetScreenSize() const { return Vector2(setting.width, setting.height); }
+		inline Vector2 GetViewportSize() const { return Vector2(setting.viewportWidth, setting.viewportHeight); }
 
 	protected:
 		// 입력 처리 함수 (입력 폴링)

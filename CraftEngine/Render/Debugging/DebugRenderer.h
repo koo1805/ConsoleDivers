@@ -39,6 +39,9 @@ namespace Craft
 		// World 기준 테두리 사각형
 		void DrawWorldRect(const Vector2& position, const Vector2& size, const ColorRGB& color, int sortingOrder = 100);
 
+		// World 좌표 기준 선 그리기
+		void DrawWorldLine(const Vector2& start, const Vector2& end, const ColorRGB& color, int sortingOrder = 100);
+
 		// 저장된 Debug명령을 Renderer에 제출
 		void DebugFlush();
 

@@ -33,8 +33,11 @@ namespace Craft
 
 		consoleContext->Resize(Vector2(setting.width, setting.height));
 
+		const Vector2 screenSize(setting.width, setting.height);
+		const Vector2 viewportSize(setting.viewportWidth, setting.viewportHeight);
+
 		// 렌더러 객체 생성
-		renderer = std::make_unique<Renderer>(Vector2(setting.width, setting.height));
+		renderer = std::make_unique<Renderer>(screenSize, viewportSize);
 
 		// 콜리전 시스템 객체 생성
 		collisionSystem = std::make_unique<CollisionSystem>();
@@ -368,9 +371,28 @@ namespace Craft
 			{
 				sscanf_s(token, "height = %d", &setting.height);
 			}
+			else if (strcmp(key, "viewportWidth") == 0)
+			{
+				sscanf_s(token, "viewportWidth = %d", &setting.viewportWidth);
+			}
+			else if (strcmp(key, "viewportHeight") == 0)
+			{
+				sscanf_s(token, "viewportHeight = %d", &setting.viewportHeight);
+			}
 
 			// 나머지 문자열 자르기(개행 문자 기준으로)
 			token = strtok_s(nullptr, "\n", &context);
+		}
+
+		// 설정값 검증
+		if (setting.viewportWidth <= 0 || setting.viewportWidth > setting.width)
+		{
+			setting.viewportWidth = setting.width;
+		}
+
+		if (setting.viewportHeight <= 0 || setting.viewportHeight > setting.height)
+		{
+			setting.viewportHeight = setting.height;
 		}
 
 		// 파일 닫기

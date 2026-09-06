@@ -2,6 +2,7 @@
 
 #include <Algorithm/QuadTree/QuadTreeBounds.h>
 #include <Algorithm/QuadTree/QuadTreeQueryTrace.h>
+#include <Math/Vector2F.h>
 
 #include <memory>
 #include <vector>
@@ -23,6 +24,12 @@ namespace Craft
 	private:
 		struct ArcQueryDebugRecord
 		{
+			// 이번 Arc Query가 시작된 위치
+			Vector2F sourcePosition = Vector2F::Zero;
+
+			// 실제 Arc가 연결된 최종 Target 위치
+			Vector2F targetPosition = Vector2F::Zero;
+
 			// Query 영역
 			QuadTreeBounds queryBounds;
 
@@ -59,7 +66,12 @@ namespace Craft
 		void BeginArcThrowerDebugCapture();
 
 		// 하나의 QuadTree Query 기록
-		void AddArcThrowerQueryRecord(const QuadTreeBounds& queryBounds, const std::vector<QuadTreeQueryStep>& trace, const std::shared_ptr<Actor>& selectedTarget);
+		void AddArcThrowerQueryRecord(
+			const Vector2F& sourcePosition,
+			const Vector2F& targetPosition,
+			const QuadTreeBounds& queryBounds,
+			const std::vector<QuadTreeQueryStep>& trace,
+			const std::shared_ptr<Actor>& selectedTarget);
 
 		// Arc 한 발 Debug 데이터 수집 종료
 		void EndArcThrowerDebugCapture();

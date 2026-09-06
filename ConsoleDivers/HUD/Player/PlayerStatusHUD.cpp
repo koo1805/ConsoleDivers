@@ -16,14 +16,9 @@ void PlayerStatusHUD::Initialize(const std::shared_ptr<Craft::HUDCanvas>& canvas
 
 	this->player = player;
 
-	// 임시 위치
-	// 최종 Layout 정리 전까지 ScreenSpace 절대좌표 사용
-	// 이후 viewport 기준으로 Anchor 처리 예정
-	// ============================================================
+	const Craft::Vector2 initialPosition = Craft::Vector2::Zero;
 
-	const Craft::Vector2 panelPosition(90, 30);
-
-	const Craft::Vector2 panelSize(26, 9);
+	const Craft::Vector2 panelSize(PanelWidth, PanelHeight);
 
 	const Craft::ColorRGB panelColor(20, 20, 20);
 
@@ -31,7 +26,7 @@ void PlayerStatusHUD::Initialize(const std::shared_ptr<Craft::HUDCanvas>& canvas
 
 	// Panel
 	// ============================================================
-	panel = std::make_shared<Craft::HUDPanel>(panelPosition, panelSize, panelColor);
+	panel = std::make_shared<Craft::HUDPanel>(initialPosition, panelSize, panelColor);
 
 	panel->SetSortingOrder(1000);
 
@@ -39,7 +34,7 @@ void PlayerStatusHUD::Initialize(const std::shared_ptr<Craft::HUDCanvas>& canvas
 
 	// Border
 	// ============================================================
-	border = std::make_shared<Craft::HUDBorder>(panelPosition, panelSize, borderColor);
+	border = std::make_shared<Craft::HUDBorder>(initialPosition, panelSize, borderColor);
 
 	border->SetSortingOrder(1010);
 
@@ -47,9 +42,9 @@ void PlayerStatusHUD::Initialize(const std::shared_ptr<Craft::HUDCanvas>& canvas
 
 	// HP Bar 빨강 계열
 	// ============================================================
-	const Craft::Vector2 healthPosition(panelPosition.x + 2, panelPosition.y + 2);
+	const Craft::Vector2 healthPosition = Craft::Vector2::Zero;
 
-	const Craft::Vector2 barSize(22, 2);
+	const Craft::Vector2 barSize(BarWidth, BarHeight);
 
 	const Craft::ColorRGB healthColor(190, 45, 45);
 
@@ -63,7 +58,7 @@ void PlayerStatusHUD::Initialize(const std::shared_ptr<Craft::HUDCanvas>& canvas
 
 	// Stamina Bar HP 아래쪽에 배치
 	// ============================================================
-	const Craft::Vector2 staminaPosition(panelPosition.x + 2, panelPosition.y + 5);
+	const Craft::Vector2 staminaPosition = Craft::Vector2::Zero;
 
 	const Craft::ColorRGB staminaColor(215, 195, 55);
 
@@ -108,4 +103,26 @@ void PlayerStatusHUD::Update()
 	staminaBar->SetMaxValue(ownerPlayer->GetMaxStamina());
 
 	staminaBar->SetValue(ownerPlayer->GetCurrentStamina());
+}
+
+void PlayerStatusHUD::UpdateLayout(const HUDLayoutContext& context)
+{
+	const Craft::Vector2 panelPosition(context.viewportSize.x + RightAreaLeftMargin, context.viewportSize.y - PanelHeight - BottomMargin);
+
+	// 전체 Screen 오른쪽을 넘어가는 경우 방어
+	if (panelPosition.x + PanelWidth > context.screenSize.x)
+	{
+		return;
+	}
+
+	if (panelPosition.y < 0)
+	{
+		return;
+	}
+
+	panel->SetPosition(panelPosition);
+	border->SetPosition(panelPosition);
+
+	healthBar->SetPosition(Craft::Vector2(panelPosition.x + BarOffsetX, panelPosition.y + HealthOffsetY));
+	staminaBar->SetPosition(Craft::Vector2(panelPosition.x + BarOffsetX, panelPosition.y + StaminaOffsetY));
 }

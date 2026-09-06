@@ -112,6 +112,7 @@
     <ClCompile Include="Actor\Projectile\PelletProjectile\PelletProjectile.cpp" />
     <ClCompile Include="Actor\Projectile\ProjectileBase.cpp" />
     <ClCompile Include="Actor\Weapon\ArcThrower\ArcThrower.cpp" />
+    <ClCompile Include="Actor\Weapon\ArcThrower\Effect\ArcEffect.cpp" />
     <ClCompile Include="Actor\Weapon\Shotgun\Shotgun.cpp" />
     <ClCompile Include="Actor\Weapon\WeaponBase.cpp" />
     <ClCompile Include="Algorithm\AStar\AStarPathFinder.cpp" />
@@ -146,6 +147,7 @@
     <ClInclude Include="Actor\Projectile\PelletProjectile\PelletProjectile.h" />
     <ClInclude Include="Actor\Projectile\ProjectileBase.h" />
     <ClInclude Include="Actor\Weapon\ArcThrower\ArcThrower.h" />
+    <ClInclude Include="Actor\Weapon\ArcThrower\Effect\ArcEffect.h" />
     <ClInclude Include="Actor\Weapon\Data\WeaponData.h" />
     <ClInclude Include="Actor\Weapon\Shotgun\Shotgun.h" />
     <ClInclude Include="Actor\Weapon\WeaponBase.h" />
@@ -157,6 +159,7 @@
     <ClInclude Include="HUD\Equipment\AmmoHUD.h" />
     <ClInclude Include="HUD\Equipment\WeaponSlotHUD.h" />
     <ClInclude Include="HUD\GameHUD.h" />
+    <ClInclude Include="HUD\HUDLayoutContext.h" />
     <ClInclude Include="HUD\Player\PlayerStatusHUD.h" />
     <ClInclude Include="HUD\Resource\Number\NumberSprite.h" />
     <ClInclude Include="Level\GameLevel.h" />

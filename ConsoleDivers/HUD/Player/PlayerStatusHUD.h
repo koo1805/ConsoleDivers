@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <HUD/HUDLayoutContext.h>
+
 #include <memory>
 
 class Player;
@@ -25,6 +27,8 @@ public:
 	// Player 상태값을 HUD에 반영
 	void Update();
 
+	void UpdateLayout(const HUDLayoutContext& context);
+
 private:
 	// ------------------------------------------------------------
 	// HUD는 Player 생명주기를 소유하지 않는다.
@@ -42,4 +46,19 @@ private:
 
 	// Stamina
 	std::shared_ptr<Craft::HUDProgressBar> staminaBar;
+
+	// HUD
+	static constexpr int RightAreaLeftMargin = 2;
+	static constexpr int BottomMargin = 2;
+
+	static constexpr int PanelWidth = 26;
+	static constexpr int PanelHeight = 9;
+
+	static constexpr int BarOffsetX = 2;
+
+	static constexpr int HealthOffsetY = 2;
+	static constexpr int StaminaOffsetY = 5;
+
+	static constexpr int BarWidth = 22;
+	static constexpr int BarHeight = 2;
 };

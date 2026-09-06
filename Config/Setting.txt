@@ -1,3 +1,5 @@
 framerate = 120
-width = 200
-height = 150
+width = 240
+height = 180
+viewportWidth = 200
+viewportHeight = 150

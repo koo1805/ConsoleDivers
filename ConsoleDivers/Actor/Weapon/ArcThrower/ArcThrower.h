@@ -66,6 +66,14 @@ private:
     // 두 위치 사이에 벽이 존재하지 않는지 검사
     bool HasLineOfSight(const Craft::Vector2F& startPosition, const Craft::Vector2F& endPosition) const;
 
+    // Arc가 실제로 발사되는 총구 위치
+    Craft::Vector2F GetArcMuzzlePosition() const;
+
+    // Enemy의 Arc 타격 기준 위치 계산
+    Craft::Vector2F GetTargetCenter(const std::shared_ptr<EnemyBase>& target) const;
+
+    Craft::Vector2F GetArcVisualEndPosition(const Craft::Vector2F& startPosition, const Craft::Vector2F& aimDirection) const;
+
     // ArcThrower 기본 Sprite 생성
     Craft::PixelSprite CreateArcThrowerSprite() const;
 

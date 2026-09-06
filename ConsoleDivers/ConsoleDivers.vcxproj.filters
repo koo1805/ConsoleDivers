@@ -99,6 +99,9 @@
     <ClCompile Include="HUD\Player\PlayerStatusHUD.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Actor\Weapon\ArcThrower\Effect\ArcEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Level\GameLevel.h">
@@ -201,6 +204,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Actor\Character\DamageInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor\Weapon\ArcThrower\Effect\ArcEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HUD\HUDLayoutContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

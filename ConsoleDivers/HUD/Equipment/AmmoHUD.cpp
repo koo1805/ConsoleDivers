@@ -29,21 +29,21 @@ void AmmoHUD::Initialize(
 	// Ammo는 항상 세 번째 슬롯 위치에 고정
 	// Support Weapon이 없어도 위치는 변하지 않음
 	// ------------------------------------------------------------
-	const Craft::Vector2 ammoPosition(52, 32);
+	const Craft::Vector2 initialPosition = Craft::Vector2::Zero;
 
-	const Craft::Vector2 ammoSize(22, 7);
+	const Craft::Vector2 ammoSize(SlotWidth, SlotHeight);
 
 	const Craft::ColorRGB panelColor(20, 20, 20);
 
 	const Craft::ColorRGB borderColor(90, 90, 90);
 
-	panel = std::make_shared<Craft::HUDPanel>(ammoPosition, ammoSize, panelColor);
+	panel = std::make_shared<Craft::HUDPanel>(initialPosition, ammoSize, panelColor);
 
 	panel->SetSortingOrder(1000);
 
 	canvas->AddWidget(panel);
 
-	border = std::make_shared<Craft::HUDBorder>(ammoPosition, ammoSize, borderColor);
+	border = std::make_shared<Craft::HUDBorder>(initialPosition, ammoSize, borderColor);
 
 	border->SetSortingOrder(1010);
 
@@ -51,7 +51,7 @@ void AmmoHUD::Initialize(
 
 	// 현재 탄약
 	// ============================================================
-	currentAmmoNumber = std::make_shared<Craft::HUDNumber>(Craft::Vector2(ammoPosition.x + 3, ammoPosition.y + 1));
+	currentAmmoNumber = std::make_shared<Craft::HUDNumber>(Craft::Vector2::Zero);
 
 	currentAmmoNumber->SetDigitSprites(digitSprites);
 
@@ -67,7 +67,7 @@ void AmmoHUD::Initialize(
 	// 예비 탄창 수
 	// 현재 WeaponData가 reserveMagazineCount를 사용하므로 남은 총알 수가 아니라 "남은 탄창 개수"를 표시한다.
 	// ============================================================
-	reserveMagazineNumber = std::make_shared<Craft::HUDNumber>(Craft::Vector2(ammoPosition.x + 13, ammoPosition.y + 1));
+	reserveMagazineNumber = std::make_shared<Craft::HUDNumber>(Craft::Vector2(Craft::Vector2::Zero));
 
 	reserveMagazineNumber->SetDigitSprites(digitSprites);
 
@@ -80,7 +80,7 @@ void AmmoHUD::Initialize(
 	canvas->AddWidget(reserveMagazineNumber);
 
 	// 무한 Sprite
-	infiniteAmmoSprite = std::make_shared<Craft::HUDSprite>(infinitySprite, Craft::Vector2(ammoPosition.x + 8,ammoPosition.y + 1));
+	infiniteAmmoSprite = std::make_shared<Craft::HUDSprite>(infinitySprite, Craft::Vector2::Zero);
 
 	infiniteAmmoSprite->SetSortingOrder(1020);
 
@@ -145,4 +145,23 @@ void AmmoHUD::Update()
 
 	// 남아있는 예비 탄창 수
 	reserveMagazineNumber->SetValue(equippedWeapon->GetReserveMagazineCount());
+}
+
+void AmmoHUD::UpdateLayout(const HUDLayoutContext& context)
+{
+	const Craft::Vector2 ammoPosition(AmmoOffsetX, context.viewportSize.y + BottomAreaTopMargin);
+
+	if (ammoPosition.y + SlotHeight > context.screenSize.y)
+	{
+		return;
+	}
+
+	panel->SetPosition(ammoPosition);
+	border->SetPosition(ammoPosition);
+
+	currentAmmoNumber->SetPosition(Craft::Vector2(ammoPosition.x + CurrentAmmoOffsetX, ammoPosition.y + ContentOffsetY));
+
+	reserveMagazineNumber->SetPosition(Craft::Vector2(ammoPosition.x + ReserveMagazineOffsetX, ammoPosition.y + ContentOffsetY));
+
+	infiniteAmmoSprite->SetPosition(Craft::Vector2(ammoPosition.x + InfiniteAmmoOffsetX, ammoPosition.y + ContentOffsetY));
 }

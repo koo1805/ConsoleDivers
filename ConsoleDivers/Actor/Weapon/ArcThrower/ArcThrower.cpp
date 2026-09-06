@@ -6,6 +6,7 @@
 #include <Algorithm/QuadTree/QuadTreeBounds.h>
 #include <Algorithm/AStar/Navigation/NavigationGrid.h>
 #include <Debugging/DebugManager.h>
+#include <Actor/Weapon/ArcThrower/Effect/ArcEffect.h>
 
 #include <algorithm>
 #include <cmath>
@@ -156,6 +157,13 @@ void ArcThrower::FireChainLightning(const Craft::Vector2F& aimDirection)
 		return;
 	}
 
+	const std::shared_ptr<Craft::Level> level = GetOwner();
+
+	if (!level)
+	{
+		return;
+	}
+
 	// 이번 Arc 발사에 발생하는 모든 Query 기록 시작
 	Craft::DebugManager& debugManager = Craft::DebugManager::Get();
 
@@ -164,12 +172,19 @@ void ArcThrower::FireChainLightning(const Craft::Vector2F& aimDirection)
 	{
 		debugManager.BeginArcThrowerDebugCapture();
 	}
+	// 이번 발사의 총구 위치는 한 번만 계산
+	const Craft::Vector2F arcMuzzlePosition = GetArcMuzzlePosition();
 
 	// 첫 번째 Target 탐색
-	std::shared_ptr<EnemyBase> currentTarget = FindInitialTarget(GetPosition(), aimDirection);
+	std::shared_ptr<EnemyBase> currentTarget = FindInitialTarget(arcMuzzlePosition, aimDirection);
 
 	if (!currentTarget)
 	{
+		const Craft::Vector2F arcEndPosition = GetArcVisualEndPosition(arcMuzzlePosition, aimDirection);
+
+		// 적이 없어도 발사 자체는 화면에 보이게 함
+		level->SpawnActor<ArcEffect>(arcMuzzlePosition, arcEndPosition);
+
 		if (debugManager.IsArcThrowerDebugEnabled())
 		{
 			debugManager.EndArcThrowerDebugCapture();
@@ -183,6 +198,9 @@ void ArcThrower::FireChainLightning(const Craft::Vector2F& aimDirection)
 
 	hitTargets.reserve(maxChainTargets);
 
+	// 첫 Arc는 무기 위치에서 시작
+	Craft::Vector2F arcStartPosition = arcMuzzlePosition;
+
 	// Chain Lightning
 	for (int chainIndex = 0; chainIndex < maxChainTargets; ++chainIndex)
 	{
@@ -191,10 +209,22 @@ void ArcThrower::FireChainLightning(const Craft::Vector2F& aimDirection)
 			break;
 		}
 
+		// 현재 Enemy 위치
+		const Craft::Vector2F targetPosition = GetTargetCenter(currentTarget);
+
+		// 실제 전기 시각 Effect 생성
+		level->SpawnActor<ArcEffect>(arcStartPosition, targetPosition);
+
+		// 실제 Damage
 		ApplyElectricDamage(currentTarget);
 
+		// 이번 Chain에서 맞은 Enemy 기록
 		hitTargets.emplace_back(currentTarget);
 
+		// 다음 Chain은 현재 Enemy에서 시작
+		arcStartPosition = targetPosition;
+
+		// 현재 Enemy 주변에서 다음 Target 검색
 		currentTarget = FindNextChainTarget(currentTarget, hitTargets);
 	}
 
@@ -248,7 +278,9 @@ std::shared_ptr<EnemyBase> ArcThrower::FindInitialTarget(const Craft::Vector2F& 
 
 	std::shared_ptr<EnemyBase> bestTarget;
 
-	float bestDistanceSquared = initialTargetRange * initialTargetRange;
+	const float maxRangeSquared = initialTargetRange * initialTargetRange;
+
+	float bestDistanceSquared = maxRangeSquared;
 
 	for (const auto& actor : candidates)
 	{
@@ -269,7 +301,7 @@ std::shared_ptr<EnemyBase> ArcThrower::FindInitialTarget(const Craft::Vector2F& 
 			continue;
 		}
 
-		const Craft::Vector2F enemyPosition = enemy->GetPosition();
+		const Craft::Vector2F enemyPosition = GetTargetCenter(enemy);
 
 		const float deltaX = enemyPosition.x - origin.x;
 
@@ -278,7 +310,7 @@ std::shared_ptr<EnemyBase> ArcThrower::FindInitialTarget(const Craft::Vector2F& 
 		const float distanceSquared = deltaX * deltaX + deltaY * deltaY;
 
 		// 실제 원형 Range 검사
-		if (distanceSquared > initialTargetRange * initialTargetRange)
+		if (distanceSquared > maxRangeSquared)
 		{
 			continue;
 		}
@@ -317,10 +349,18 @@ std::shared_ptr<EnemyBase> ArcThrower::FindInitialTarget(const Craft::Vector2F& 
 			bestTarget = enemy;
 		}
 	}
+
+	Craft::Vector2F debugTargetPosition = Craft::Vector2F::Zero;
+
+	if (bestTarget)
+	{
+		debugTargetPosition = GetTargetCenter(bestTarget);
+	}
+
 	// Arc Debug Mode일 때 이번 Query와 최종 선택된 Target을 DebugManager에 전달
 	if (Craft::DebugManager::Get().IsArcThrowerDebugEnabled())
 	{
-		Craft::DebugManager::Get().AddArcThrowerQueryRecord(queryBounds, queryTrace, bestTarget);
+		Craft::DebugManager::Get().AddArcThrowerQueryRecord(origin, debugTargetPosition, queryBounds, queryTrace, bestTarget);
 	}
 
 	return bestTarget;
@@ -338,7 +378,7 @@ std::shared_ptr<EnemyBase> ArcThrower::FindNextChainTarget(const std::shared_ptr
 		return nullptr;
 	}
 
-	const Craft::Vector2F currentPosition = currentTarget->GetPosition();
+	const Craft::Vector2F currentPosition = GetTargetCenter(currentTarget);
 
 	const Craft::QuadTreeBounds queryBounds(
 		currentPosition.x - chainRange,
@@ -362,7 +402,9 @@ std::shared_ptr<EnemyBase> ArcThrower::FindNextChainTarget(const std::shared_ptr
 
 	std::shared_ptr<EnemyBase> bestTarget;
 
-	float bestDistanceSquared = chainRange * chainRange;
+	const float chainRangeSquared = chainRange * chainRange;
+
+	float bestDistanceSquared = chainRangeSquared;
 
 	for (const auto& actor : candidates)
 	{
@@ -389,7 +431,7 @@ std::shared_ptr<EnemyBase> ArcThrower::FindNextChainTarget(const std::shared_ptr
 			continue;
 		}
 
-		const Craft::Vector2F enemyPosition = enemy->GetPosition();
+		const Craft::Vector2F enemyPosition = GetTargetCenter(enemy);
 
 		const float deltaX = enemyPosition.x - currentPosition.x;
 
@@ -397,7 +439,7 @@ std::shared_ptr<EnemyBase> ArcThrower::FindNextChainTarget(const std::shared_ptr
 
 		const float distanceSquared = deltaX * deltaX + deltaY * deltaY;
 
-		if (distanceSquared > chainRange * chainRange)
+		if (distanceSquared > chainRangeSquared)
 		{
 			continue;
 		}
@@ -417,9 +459,16 @@ std::shared_ptr<EnemyBase> ArcThrower::FindNextChainTarget(const std::shared_ptr
 		}
 	}
 
+	Craft::Vector2F debugTargetPosition = Craft::Vector2F::Zero;
+
+	if (bestTarget)
+	{
+		debugTargetPosition = GetTargetCenter(bestTarget);
+	}
+
 	if (Craft::DebugManager::Get().IsArcThrowerDebugEnabled())
 	{
-		Craft::DebugManager::Get().AddArcThrowerQueryRecord(queryBounds, queryTrace, bestTarget);
+		Craft::DebugManager::Get().AddArcThrowerQueryRecord(currentPosition, debugTargetPosition, queryBounds, queryTrace, bestTarget);
 	}
 
 	return bestTarget;
@@ -482,8 +531,56 @@ bool ArcThrower::HasLineOfSight(const Craft::Vector2F& startPosition, const Craf
 	return navigationGrid->HasLineOfSight(startPosition, endPosition);
 }
 
-Craft::PixelSprite
-ArcThrower::CreateArcThrowerSprite() const
+Craft::Vector2F ArcThrower::GetArcMuzzlePosition() const
+{
+	if (IsFacingRight())
+	{
+		return Craft::Vector2F(GetPosition().x + GetWidth() - 1.0f, GetPosition().y + 1.0f);
+	}
+
+	return Craft::Vector2F(GetPosition().x, GetPosition().y + 1.0f);
+}
+
+Craft::Vector2F ArcThrower::GetTargetCenter(const std::shared_ptr<EnemyBase>& target) const
+{
+	// 유효하지 않은 Target이면 기본 위치 반환
+	if (!target)
+	{
+		return Craft::Vector2F::Zero;
+	}
+
+	const Craft::Vector2F targetPosition = target->GetPosition();
+
+	// Actor 위치는 Sprite의 좌상단 기준이므로 Width / Height의 절반을 더해 중심점을 구함
+	return Craft::Vector2F(
+		targetPosition.x + static_cast<float>(target->GetWidth()) * 0.5f,
+		targetPosition.y + static_cast<float>(target->GetHeight()) * 0.5f);
+}
+
+Craft::Vector2F ArcThrower::GetArcVisualEndPosition(const Craft::Vector2F& startPosition, const Craft::Vector2F& aimDirection) const
+{
+	// NavigationGrid가 없다면 벽 판정을 할 수 없으므로 최대 사거리만 계산
+	if (!navigationGrid)
+	{
+		const float directionLength = std::sqrt(aimDirection.x * aimDirection.x + aimDirection.y * aimDirection.y);
+
+		if (directionLength <= 0.0001f)
+		{
+			return startPosition;
+		}
+
+		const Craft::Vector2F normalizedDirection(aimDirection.x / directionLength, aimDirection.y / directionLength);
+
+		return Craft::Vector2F(
+			startPosition.x +normalizedDirection.x * initialTargetRange,
+			startPosition.y +normalizedDirection.y * initialTargetRange);
+	}
+
+	// NavigationGrid가 있다면 최대 사거리까지 진행하면서 벽 직전에서 멈춤
+	return navigationGrid->GetLineEndBeforeWall(startPosition, aimDirection, initialTargetRange);
+}
+
+Craft::PixelSprite ArcThrower::CreateArcThrowerSprite() const
 {
 	constexpr int width = 11;
 	constexpr int height = 4;

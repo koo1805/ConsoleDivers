@@ -24,7 +24,8 @@ public:
 
 	void Update();
 
-	void Draw();
+private:
+	void UpdateLayout();
 
 private:
 	std::shared_ptr<Craft::HUDCanvas> canvas;

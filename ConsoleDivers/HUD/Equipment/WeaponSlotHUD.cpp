@@ -1,5 +1,4 @@
 ﻿#include "WeaponSlotHUD.h"
-
 #include <Actor/Player/Player.h>
 #include <Actor/Weapon/WeaponBase.h>
 
@@ -7,6 +6,7 @@
 #include <HUD/Panel/HUDPanel.h>
 #include <HUD/Border/HUDBorder.h>
 #include <HUD/Sprite/HUDSprite.h>
+#include <HUD/HUDLayoutContext.h>
 
 #include <Math/ColorRGB.h>
 
@@ -19,6 +19,9 @@ void WeaponSlotHUD::Initialize(const std::shared_ptr<Craft::HUDCanvas>& canvas, 
 
 	this->player = player;
 
+	const Craft::Vector2 initialPosition = Craft::Vector2::Zero;
+	const Craft::Vector2 slotSize(SlotWidth, SlotHeight);
+
 	// HUD 색상
 	// 아직 실제 최종 디자인 단계가 아니므로 색상은 여기서 임시로 지정
 
@@ -30,17 +33,13 @@ void WeaponSlotHUD::Initialize(const std::shared_ptr<Craft::HUDCanvas>& canvas, 
 
 	// Primary Slot
 	// ============================================================
-	const Craft::Vector2 primaryPosition(4, 32);
-
-	const Craft::Vector2 slotSize(22, 7);
-
-	primaryPanel =std::make_shared<Craft::HUDPanel>(primaryPosition, slotSize, panelColor);
+	primaryPanel =std::make_shared<Craft::HUDPanel>(initialPosition, slotSize, panelColor);
 
 	primaryPanel->SetSortingOrder(1000);
 
 	canvas->AddWidget(primaryPanel);
 
-	primaryBorder = std::make_shared<Craft::HUDBorder>(primaryPosition, slotSize, selectedBorderColor);
+	primaryBorder = std::make_shared<Craft::HUDBorder>(initialPosition, slotSize, selectedBorderColor);
 
 	primaryBorder->SetSortingOrder(1010);
 
@@ -48,7 +47,7 @@ void WeaponSlotHUD::Initialize(const std::shared_ptr<Craft::HUDCanvas>& canvas, 
 
 	// Weapon Sprite는 슬롯 안쪽으로 약간 띄워 배치
 	// ------------------------------------------------------------
-	primaryWeaponSprite = std::make_shared<Craft::HUDSprite>(nullptr, Craft::Vector2(primaryPosition.x + 4, primaryPosition.y + 2));
+	primaryWeaponSprite = std::make_shared<Craft::HUDSprite>(nullptr, Craft::Vector2(initialPosition.x + WeaponSpriteOffsetX, initialPosition.y + WeaponSpriteOffsetY));
 
 	primaryWeaponSprite->SetSortingOrder(1020);
 
@@ -56,7 +55,7 @@ void WeaponSlotHUD::Initialize(const std::shared_ptr<Craft::HUDCanvas>& canvas, 
 
 	// Support Slot -> Primary 오른쪽에 배치
 	// ============================================================
-	const Craft::Vector2 supportPosition(primaryPosition.x + slotSize.x + 2, primaryPosition.y);
+	const Craft::Vector2 supportPosition(initialPosition.x + SlotWidth + SlotSpacing, initialPosition.y);
 
 	supportPanel = std::make_shared<Craft::HUDPanel>(supportPosition, slotSize, panelColor);
 
@@ -70,7 +69,7 @@ void WeaponSlotHUD::Initialize(const std::shared_ptr<Craft::HUDCanvas>& canvas, 
 
 	canvas->AddWidget(supportBorder);
 
-	supportWeaponSprite = std::make_shared<Craft::HUDSprite>(nullptr, Craft::Vector2(supportPosition.x + 4, supportPosition.y + 2));
+	supportWeaponSprite = std::make_shared<Craft::HUDSprite>(nullptr, Craft::Vector2(supportPosition.x + WeaponSpriteOffsetX, supportPosition.y + WeaponSpriteOffsetY));
 
 	supportWeaponSprite->SetSortingOrder(1020);
 
@@ -144,4 +143,29 @@ void WeaponSlotHUD::Update()
 	{
 		supportBorder->SetBorderColor(activeSlot == WeaponSlotType::Support ? selectedBorderColor : normalBorderColor);
 	}
+}
+
+void WeaponSlotHUD::UpdateLayout(const HUDLayoutContext& context)
+{
+	// Viewport 아래쪽이 Bottom HUD 영역의 시작선
+	// ------------------------------------------------------------
+	const Craft::Vector2 primaryPosition(LeftMargin, context.viewportSize.y + BottomAreaTopMargin);
+
+	// ScreenBuffer 하단을 넘어가는 잘못된 Setting 방어
+	if (primaryPosition.y + SlotHeight > context.screenSize.y)
+	{
+		return;
+	}
+
+	primaryPanel->SetPosition(primaryPosition);
+	primaryBorder->SetPosition(primaryPosition);
+
+	primaryWeaponSprite->SetPosition(Craft::Vector2(primaryPosition.x + WeaponSpriteOffsetX, primaryPosition.y + WeaponSpriteOffsetY));
+
+	// Support Slot은 Primary 오른쪽
+	const Craft::Vector2 supportPosition(primaryPosition.x + SlotWidth + SlotSpacing, primaryPosition.y);
+
+	supportPanel->SetPosition(supportPosition);
+	supportBorder->SetPosition(supportPosition);
+	supportWeaponSprite->SetPosition(Craft::Vector2(supportPosition.x + WeaponSpriteOffsetX, supportPosition.y +WeaponSpriteOffsetY));
 }

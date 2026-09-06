@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <HUD/HUDLayoutContext.h>
+
 #include <memory>
 
 class Player;
@@ -26,6 +28,8 @@ public:
 	// Player의 현재 무기 상태를 HUD에 반영
 	void Update();
 
+	void UpdateLayout(const HUDLayoutContext& context);
+
 private:
 	// HUD는 Player의 생명주기를 소유하면 안 되므로 weak_ptr 사용
 	std::weak_ptr<Player> player;
@@ -45,4 +49,16 @@ private:
 	std::shared_ptr<Craft::HUDBorder> supportBorder;
 
 	std::shared_ptr<Craft::HUDSprite> supportWeaponSprite;
+
+	// // HUD 디자인 값
+	static constexpr int LeftMargin = 4;
+	static constexpr int BottomAreaTopMargin = 2;
+
+	static constexpr int SlotWidth = 22;
+	static constexpr int SlotHeight = 7;
+
+	static constexpr int SlotSpacing = 2;
+
+	static constexpr int WeaponSpriteOffsetX = 4;
+	static constexpr int WeaponSpriteOffsetY = 2;
 };

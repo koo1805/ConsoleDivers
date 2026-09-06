@@ -26,6 +26,9 @@ public:
 	// 두 World 위치 사이에 이동 불가능한 Grid Cell이 존재하는지 검사
 	bool HasLineOfSight(const Craft::Vector2F& startWorldPosition, const Craft::Vector2F& endWorldPosition) const;
 
+	// 처음 만나는 벽 직전 위치를 반환
+	Craft::Vector2F GetLineEndBeforeWall(const Craft::Vector2F& startPosition, const Craft::Vector2F& direction, float maxDistance) const;
+
 	// 좌표 변환
 	// 월드 -> 그리드
 	Craft::Vector2 WorldToGrid(const Craft::Vector2F& worldPosition) const;
