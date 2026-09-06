@@ -78,6 +78,12 @@ public:
 	// 현재 입력된 커맨드
 	inline const std::vector<StratagemCommand>& GetCurrentInputSequence() const { return currentInputSequence; }
 
+	// 해당 인덱스의 Stratagem이 최종 매칭된 대상인지 확인
+	inline bool IsMatchedStratagem(std::size_t index) const { return state == StratagemState::ReadyToThrow && matchedStratagemIndex == index; }
+
+	// 마지막 입력 결과가 특정 Stratagem을 대상으로 발생했는지 확인
+	inline bool IsFeedbackTarget(std::size_t index) const { return feedbackStratagemIndex == index; }
+
 public:
 	// Cooldown 조회
 	float GetCooldownRemaining(std::size_t index) const;
@@ -115,7 +121,7 @@ private:
 	bool IsAmbiguousSequence(const std::vector<StratagemCommand>& lhs, const std::vector<StratagemCommand>& rhs) const;
 
 	// 실패/쿨타임 등 결과를 남기면서 Idle로 복귀
-	void ReturnToIdle(StratagemInputResult result);
+	void ReturnToIdle(StratagemInputResult result, std::size_t feedbackIndex);
 
 private:
 	// 사전에 등록된 모든 Stratagem
@@ -133,4 +139,6 @@ private:
 	StratagemState state = StratagemState::Idle;
 
 	StratagemInputResult lastInputResult = StratagemInputResult::None;
+
+	std::size_t feedbackStratagemIndex = InvalidStratagemIndex;
 };

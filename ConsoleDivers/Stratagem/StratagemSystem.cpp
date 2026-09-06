@@ -76,7 +76,9 @@ void StratagemSystem::BeginInput()
 
 	matchedStratagemIndex = InvalidStratagemIndex;
 
-	// 새 입력을 시작하므로 이전 실패 / 완료 표시 제거
+	// 새 입력을 시작하므로 이전 실패 / 쿨타임 표시 대상 제거
+	feedbackStratagemIndex = InvalidStratagemIndex;
+
 	lastInputResult =StratagemInputResult::None;
 
 	state = StratagemState::Inputting;
@@ -150,7 +152,7 @@ void StratagemSystem::ProcessCommand(StratagemCommand command)
 	// 어떤 Stratagem의 Prefix도 아니다 -> 즉시 실패
 	if (!hasPrefixMatch)
 	{
-		ReturnToIdle(StratagemInputResult::Failed);
+		ReturnToIdle(StratagemInputResult::Failed, InvalidStratagemIndex);
 		return;
 	}
 
@@ -167,13 +169,15 @@ void StratagemSystem::ProcessCommand(StratagemCommand command)
 	// 커맨드는 맞았지만 해당 Stratagem이 Cooldown 중
 	if (matchedRuntime.cooldownRemaining > 0.0f)
 	{
-		ReturnToIdle(StratagemInputResult::Cooldown);
+		ReturnToIdle(StratagemInputResult::Cooldown, completedMatchIndex);
 
 		return;
 	}
 
 	// 완전 성공
 	matchedStratagemIndex = completedMatchIndex;
+
+	feedbackStratagemIndex = InvalidStratagemIndex;
 
 	lastInputResult = StratagemInputResult::Completed;
 
@@ -218,11 +222,14 @@ bool StratagemSystem::IsAmbiguousSequence(const std::vector<StratagemCommand>& l
 	return true;
 }
 
-void StratagemSystem::ReturnToIdle(StratagemInputResult result)
+void StratagemSystem::ReturnToIdle(StratagemInputResult result, std::size_t feedbackIndex)
 {
 	currentInputSequence.clear();
 
 	matchedStratagemIndex = InvalidStratagemIndex;
+
+	// 실패 결과와 함께 어떤 Stratagem에 대한 결과인지도 저장
+	feedbackStratagemIndex = feedbackIndex;
 
 	state = StratagemState::Idle;
 
@@ -245,6 +252,8 @@ void StratagemSystem::CancelInput()
 
 	matchedStratagemIndex = InvalidStratagemIndex;
 
+	feedbackStratagemIndex = InvalidStratagemIndex;
+
 	// 평상 상태로 복귀
 	state = StratagemState::Idle;
 
@@ -257,6 +266,8 @@ void StratagemSystem::Reset()
 	currentInputSequence.clear();
 
 	matchedStratagemIndex = InvalidStratagemIndex;
+
+	feedbackStratagemIndex = InvalidStratagemIndex;
 
 	state = StratagemState::Idle;
 

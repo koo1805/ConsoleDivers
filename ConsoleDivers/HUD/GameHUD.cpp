@@ -49,7 +49,7 @@ void GameHUD::Initialize(const std::shared_ptr<Player>& player)
 
 	// Stratagem HUD
 	stratagemHUD =std::make_unique<StratagemHUD>();
-	stratagemHUD->Initialize(canvas, player);
+	stratagemHUD->Initialize(canvas, player, numberSpriteSet->GetDigitPointers());
 
 	// HUD 최종 위치 계산
 	UpdateLayout();

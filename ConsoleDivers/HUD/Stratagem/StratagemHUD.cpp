@@ -1,17 +1,17 @@
 ﻿#include "StratagemHUD.h"
-
 #include <Actor/Player/Player.h>
-
+#include <Render/Cell.h>
+#include <Math/ColorRGB.h>
 #include <Stratagem/StratagemSystem.h>
 #include <Stratagem/Data/StratagemData.h>
-
 #include <HUD/Canvas/HUDCanvas.h>
 #include <HUD/Panel/HUDPanel.h>
 #include <HUD/Border/HUDBorder.h>
 #include <HUD/Sprite/HUDSprite.h>
+#include <HUD/Number/HUDNumber.h>
 
-#include <Math/ColorRGB.h>
-#include <Render/Cell.h>
+#include <algorithm>
+#include <cmath>
 
 namespace
 {
@@ -30,7 +30,10 @@ namespace
 	}
 }
 
-void StratagemHUD::Initialize(const std::shared_ptr<Craft::HUDCanvas>& canvas, const std::shared_ptr<Player>& player)
+void StratagemHUD::Initialize(
+	const std::shared_ptr<Craft::HUDCanvas>& canvas,
+	const std::shared_ptr<Player>& player,
+	const std::array<const Craft::PixelSprite*, 10>& digitSprites)
 {
 	if (!canvas || !player)
 	{
@@ -40,68 +43,127 @@ void StratagemHUD::Initialize(const std::shared_ptr<Craft::HUDCanvas>& canvas, c
 	this->player = player;
 
 	// 방향 Sprite 리소스 생성
-	// 한 번만 만들어두고 HUDSprite들이 포인터로 참조
+	// 모든 스트라타젬 Row에서 같은 Sprite를 사용하므로 한 번만 생성
 	upSprite = CreateArrowSprite(StratagemCommand::Up);
-
 	downSprite = CreateArrowSprite(StratagemCommand::Down);
-
 	leftSprite = CreateArrowSprite(StratagemCommand::Left);
-
 	rightSprite = CreateArrowSprite(StratagemCommand::Right);
 
-	const Craft::Vector2 initialPosition = Craft::Vector2::Zero;
-
-	const Craft::Vector2 panelSize(PanelWidth, PanelHeight);
-
-	const Craft::ColorRGB panelColor(20, 20, 20);
-
-	const Craft::ColorRGB borderColor(90, 90, 90);
-
-	// Panel
-	// ========================================================
-	panel = std::make_shared<Craft::HUDPanel>(initialPosition, panelSize, panelColor);
-
-	panel->SetSortingOrder(1000);
-
-	canvas->AddWidget(panel);
-
-	// Border
-	// ========================================================
-	border = std::make_shared<Craft::HUDBorder>(initialPosition, panelSize, borderColor);
-
-	border->SetSortingOrder(1010);
-
-	canvas->AddWidget(border);
-
-	// 현재 Stratagem의 Command 수만큼 Widget 생성
-	// ========================================================
 	const StratagemSystem& stratagemSystem = player->GetStratagemSystem();
 
-	const StratagemData* stratagem = stratagemSystem.GetStratagemData(0);
+	const std::size_t stratagemCount = stratagemSystem.GetStratagemCount();
 
-	if (!stratagem)
+	if (stratagemCount == 0)
 	{
 		return;
 	}
 
-	commandWidgets.clear();
+	// 가장 긴 Command Sequence 탐색
+	// 모든 Row 너비를 동일하게 만들기 위함
+	std::size_t maxCommandCount = 0;
 
-	commandWidgets.reserve(stratagem->commandSequence.size());
-
-	for (std::size_t index = 0; index < stratagem->commandSequence.size(); ++index)
+	for (std::size_t index = 0; index < stratagemCount; ++index)
 	{
-		const StratagemCommand command = stratagem->commandSequence[index];
+		const StratagemData* data = stratagemSystem.GetStratagemData(index);
 
-		std::shared_ptr<Craft::HUDSprite> commandWidget = std::make_shared<Craft::HUDSprite>(GetCommandSprite(command), Craft::Vector2::Zero);
+		if (!data)
+		{
+			continue;
+		}
 
-		commandWidget->SetSortingOrder(1020);
-
-		canvas->AddWidget(commandWidget);
-
-		commandWidgets.push_back(commandWidget);
+		maxCommandCount = (std::max)(maxCommandCount, data->commandSequence.size());
 	}
 
-	// 최초 상태 반영
+	// Command 영역 전체 너비
+	int commandAreaWidth = 0;
+
+	if (maxCommandCount > 0)
+	{
+		commandAreaWidth = static_cast<int>(maxCommandCount) * (CommandWidth + CommandSpacing) - CommandSpacing;
+	}
+
+	// Row 전체 너비
+	rowWidth = CommandOffsetX + commandAreaWidth + CooldownGap + CooldownReservedWidth + RightPadding;
+
+	const Craft::Vector2 initialPosition = Craft::Vector2::Zero;
+
+	const Craft::Vector2 rowSize(rowWidth, RowHeight);
+
+	const Craft::ColorRGB panelColor(20, 20, 20);
+
+	const Craft::ColorRGB borderColor(90, 90, 90);;
+
+	rows.clear();
+	rows.reserve(stratagemCount);
+
+	// 등록된 모든 Stratagem에 HUD Row 생성
+	for (std::size_t stratagemIndex = 0; stratagemIndex < stratagemCount; ++stratagemIndex)
+	{
+		const StratagemData* data = stratagemSystem.GetStratagemData(stratagemIndex);
+
+		if (!data)
+		{
+			continue;
+		}
+
+		StratagemHUDRow row;
+
+		row.stratagemIndex = stratagemIndex;
+
+		// Row 배경 Panel
+		row.panel = std::make_shared<Craft::HUDPanel>(initialPosition, rowSize, panelColor);
+
+		row.panel->SetSortingOrder(1000);
+
+		canvas->AddWidget(row.panel);
+
+		// Row Border
+		row.border = std::make_shared<Craft::HUDBorder>(initialPosition, rowSize, borderColor);
+
+		row.border->SetSortingOrder(1010);
+
+		canvas->AddWidget(row.border);
+
+		// 방향 Command
+		row.commandWidgets.reserve(data->commandSequence.size());
+
+		for (const StratagemCommand command : data->commandSequence)
+		{
+			const Craft::PixelSprite* commandSprite = GetCommandSprite(command);
+
+			if (!commandSprite)
+			{
+				continue;
+			}
+
+			std::shared_ptr<Craft::HUDSprite> widget = std::make_shared<Craft::HUDSprite>(commandSprite, Craft::Vector2::Zero);
+
+			widget->SetSortingOrder(1020);
+
+			canvas->AddWidget(widget);
+
+			row.commandWidgets.push_back(widget);
+		}
+
+		// Cooldown 남은 시간
+		// 실제 Cooldown 중일 때만 표시
+		row.cooldownNumber = std::make_shared<Craft::HUDNumber>(Craft::Vector2::Zero);
+
+		row.cooldownNumber->SetDigitSprites(digitSprites);
+
+		row.cooldownNumber->SetMinDigits(2);
+
+		row.cooldownNumber->SetDigitSpacing(1);
+
+		row.cooldownNumber->SetSortingOrder(1020);
+
+		row.cooldownNumber->SetVisible(false);
+
+		canvas->AddWidget(row.cooldownNumber);
+
+		rows.push_back(std::move(row));
+	}
+
 	Update();
 }
 
@@ -260,23 +322,33 @@ void StratagemHUD::Update()
 {
 	std::shared_ptr<Player> ownerPlayer = player.lock();
 
+	// Player가 사라졌다면 HUD 전체 숨김
+	// ========================================================
 	if (!ownerPlayer)
 	{
-		if (panel)
+		for (StratagemHUDRow& row : rows)
 		{
-			panel->SetVisible(false);
-		}
-
-		if (border)
-		{
-			border->SetVisible(false);
-		}
-
-		for (const auto& widget : commandWidgets)
-		{
-			if (widget)
+			if (row.panel)
 			{
-				widget->SetVisible(false);
+				row.panel->SetVisible(false);
+			}
+
+			if (row.border)
+			{
+				row.border->SetVisible(false);
+			}
+
+			for (const auto& widget : row.commandWidgets)
+			{
+				if (widget)
+				{
+					widget->SetVisible(false);
+				}
+			}
+
+			if (row.cooldownNumber)
+			{
+				row.cooldownNumber->SetVisible(false);
 			}
 		}
 
@@ -287,176 +359,310 @@ void StratagemHUD::Update()
 
 	const StratagemState state = stratagemSystem.GetState();
 
-	const std::size_t currentInputIndex = stratagemSystem.GetCurrentInputIndex();
-
 	const StratagemInputResult inputResult = stratagemSystem.GetLastInputResult();
 
-	panel->SetVisible(true);
-	border->SetVisible(true);
+	// 현재까지 입력된 Command 개수
+	const std::size_t currentInputIndex = stratagemSystem.GetCurrentInputIndex();
 
-	// 상태별 Border 색
+	// HUD 색
 	// ========================================================
+
+	// 일반 상태
 	const Craft::ColorRGB idleBorderColor(90, 90, 90);
 
-	const Craft::ColorRGB inputBorderColor(235, 205, 45);
-
-	const Craft::ColorRGB readyBorderColor(65, 210, 90);
-
-	const Craft::ColorRGB failedBorderColor(220, 55, 55);
-
-	const Craft::ColorRGB cooldownBorderColor(80, 140, 220);
-
-	if (inputResult == StratagemInputResult::Failed)
-	{
-		border->SetBorderColor(failedBorderColor);
-	}
-	else if (inputResult == StratagemInputResult::Cooldown)
-	{
-		border->SetBorderColor(cooldownBorderColor);
-	}
-	else
-	{
-		switch (state)
-		{
-		case StratagemState::Idle:
-			border->SetBorderColor(idleBorderColor);
-			break;
-
-		case StratagemState::Inputting:
-			border->SetBorderColor(inputBorderColor);
-			break;
-
-		case StratagemState::ReadyToThrow:
-			border->SetBorderColor(readyBorderColor);
-			break;
-
-		default:
-			break;
-		}
-	}
-
-	// 커맨드별 상태 표시
-	// ========================================================
 	const Craft::ColorRGB idleColor(105, 105, 105);
 
-	const Craft::ColorRGB completedColor(65, 210, 90);
+	// 입력 후보
+	const Craft::ColorRGB inputBorderColor(235, 205, 45);
 
 	const Craft::ColorRGB currentColor(235, 205, 45);
 
+	// 이미 맞게 입력한 Command
+	const Craft::ColorRGB completedColor(65, 210, 90);
+
+	// 최종 성공
+	const Craft::ColorRGB readyBorderColor(65, 210, 90);
+
 	const Craft::ColorRGB readyColor(70, 230, 100);
+
+	// 잘못된 Sequence
+	const Craft::ColorRGB failedBorderColor(220, 55, 55);
 
 	const Craft::ColorRGB failedColor(220, 55, 55);
 
+	// Cooldown
+	const Craft::ColorRGB cooldownBorderColor(80, 140, 220);
+
 	const Craft::ColorRGB cooldownColor(80, 140, 220);
 
-	for (std::size_t index = 0; index < commandWidgets.size(); ++index)
+	// 입력 후보에서 탈락한 Stratagem
+	const Craft::ColorRGB eliminatedBorderColor(45, 45, 45);
+
+	const Craft::ColorRGB eliminatedColor(45, 45, 45);
+
+	// Stratagem 단위 처리
+	// ========================================================
+	for (StratagemHUDRow& row : rows)
 	{
-		const std::shared_ptr<Craft::HUDSprite>& widget = commandWidgets[index];
+		const std::size_t index = row.stratagemIndex;
 
-		if (!widget)
+		const bool isCandidate = stratagemSystem.IsStratagemCandidate(index);
+
+		const bool isMatched = stratagemSystem.IsMatchedStratagem(index);
+
+		const bool isFeedbackTarget = stratagemSystem.IsFeedbackTarget(index);
+
+		const bool isOnCooldown = stratagemSystem.IsOnCooldown(index);
+
+		// 기본 표시
+		// ----------------------------------------------------
+		if (row.panel)
 		{
-			continue;
+			row.panel->SetVisible(true);
 		}
 
-		widget->SetVisible(true);
-
-		// 잘못된 방향 입력 후
-		// ====================================================
-		if (inputResult == StratagemInputResult::Failed)
+		if (row.border)
 		{
-			widget->SetTintColor(failedColor);
-
-			continue;
+			row.border->SetVisible(true);
 		}
 
-		// 쿨타임
+		// Cooldown 숫자
 		// ====================================================
-		if (inputResult == StratagemInputResult::Cooldown)
+		if (row.cooldownNumber)
 		{
-			widget->SetTintColor(cooldownColor);
+			if (isOnCooldown)
+			{
+				// 소수점 버림
+				const float remaining = stratagemSystem.GetCooldownRemaining(index);
 
-			continue;
+				const int displaySeconds = static_cast<int>(std::ceil(remaining));
+
+				row.cooldownNumber->SetValue(displaySeconds);
+
+				row.cooldownNumber->SetVisible(true);
+			}
+			else
+			{
+				row.cooldownNumber->SetVisible(false);
+			}
 		}
 
-		// 입력 완료 상태
-		// 모든 커맨드를 녹색으로 표시
+		// Border 상태
 		// ====================================================
-		if (state == StratagemState::ReadyToThrow)
-		{
-			widget->SetTintColor(readyColor);
 
-			continue;
+		// 완전한 Command를 입력했지만
+		// 해당 Stratagem이 Cooldown이었다.
+		if (inputResult == StratagemInputResult::Cooldown && isFeedbackTarget)
+		{
+			row.border->SetBorderColor(cooldownBorderColor);
 		}
 
-		// 아직 스트라타젬 입력 중이 아님
-		// ====================================================
-		if (state == StratagemState::Idle)
+		// ReadyToThrow로 최종 선택된 Stratagem
+		else if (state == StratagemState::ReadyToThrow && isMatched)
 		{
+			row.border->SetBorderColor(readyBorderColor);
+		}
+
+		// 입력 중이며 아직 후보로 살아있음
+		else if (state == StratagemState::Inputting && isCandidate)
+		{
+			row.border->SetBorderColor(inputBorderColor);
+		}
+
+		// 입력 중 후보에서 탈락
+		else if (state == StratagemState::Inputting)
+		{
+			row.border->SetBorderColor(eliminatedBorderColor);
+		}
+
+		// 아무 Stratagem도 맞지 않은 입력
+		else if (inputResult ==StratagemInputResult::Failed)
+		{
+			row.border->SetBorderColor(failedBorderColor);
+		}
+
+		// 평상시에도 Cooldown 중이면
+		// 해당 Row를 파란색 Border로 표시
+		else if (isOnCooldown)
+		{
+			row.border->SetBorderColor(cooldownBorderColor);
+		}
+
+		else
+		{
+			row.border->SetBorderColor(idleBorderColor);
+		}
+
+		// Command 화살표 상태
+		// ====================================================
+		for (std::size_t commandIndex = 0; commandIndex < row.commandWidgets.size(); ++commandIndex)
+		{
+			const std::shared_ptr<Craft::HUDSprite>& widget = row.commandWidgets[commandIndex];
+
+			if (!widget)
+			{
+				continue;
+			}
+
+			widget->SetVisible(true);
+
+			// Cooldown 때문에 사용 실패한 바로 그 Stratagem
+			// -----------------------------------------------
+			if (inputResult == StratagemInputResult::Cooldown && isFeedbackTarget)
+			{
+				widget->SetTintColor(cooldownColor);
+
+				continue;
+			}
+
+			// 최종 매칭 성공
+			// -----------------------------------------------
+			if (state == StratagemState::ReadyToThrow)
+			{
+				if (isMatched)
+				{
+					widget->SetTintColor(readyColor);
+				}
+				else
+				{
+					widget->SetTintColor(eliminatedColor);
+				}
+
+				continue;
+			}
+
+			// 현재 Command 입력 중
+			// -----------------------------------------------
+			if (state == StratagemState::Inputting)
+			{
+				// 이 Row는 더 이상 입력 후보가 아님
+				if (!isCandidate)
+				{
+					widget->SetTintColor(eliminatedColor);
+
+					continue;
+				}
+
+				// 이미 정확히 입력한 부분
+				if (commandIndex < currentInputIndex)
+				{
+					widget->SetTintColor(completedColor);
+
+					continue;
+				}
+
+				// 지금 입력해야 하는 다음 Command
+				if (commandIndex == currentInputIndex)
+				{
+					widget->SetTintColor(currentColor);
+
+					continue;
+				}
+
+				// 아직 입력하지 않은 뒤쪽 Command
+				widget->SetTintColor(idleColor);
+
+				continue;
+			}
+
+			// 잘못된 Sequence
+			// -----------------------------------------------
+			if (inputResult == StratagemInputResult::Failed)
+			{
+				widget->SetTintColor(failedColor);
+
+				continue;
+			}
+
+			// 평상시 Cooldown 표시
+			// -----------------------------------------------
+			if (isOnCooldown)
+			{
+				widget->SetTintColor(cooldownColor);
+
+				continue;
+			}
+
+			// 일반 Idle
+			// -----------------------------------------------
 			widget->SetTintColor(idleColor);
-
-			continue;
 		}
-
-		// 이미 성공한 입력
-		// ====================================================
-		if (index < currentInputIndex)
-		{
-			widget->SetTintColor(completedColor);
-
-			continue;
-		}
-
-		// 지금 입력해야 할 방향
-		// ====================================================
-		if (index == currentInputIndex)
-		{
-			widget->SetTintColor(currentColor);
-
-			continue;
-		}
-
-		// 아직 입력하지 않은 뒤쪽 커맨드
-		widget->SetTintColor(idleColor);
 	}
 }
 
 void StratagemHUD::UpdateLayout(const HUDLayoutContext& context)
 {
-	// Viewport 오른쪽이 HUD 영역의 시작선
-	// ========================================================
-	const Craft::Vector2 panelPosition(context.viewportSize.x + RightAreaLeftMargin, TopMargin);
-
-	// 전체 ScreenBuffer를 넘어가는 설정 방어
-	// ========================================================
-	if (panelPosition.x + PanelWidth > context.screenSize.x)
+	if (rows.empty())
 	{
 		return;
 	}
 
-	if (panelPosition.y + PanelHeight > context.screenSize.y)
+	// Viewport 오른쪽이 HUD 영역 시작점
+	// ========================================================
+	const Craft::Vector2 firstRowPosition(context.viewportSize.x + RightAreaLeftMargin, TopMargin);
+
+	// HUD 전체 높이
+	const int totalHeight = static_cast<int>(rows.size()) * RowHeight + static_cast<int>(rows.size() - 1) * RowSpacing;
+
+	// ScreenBuffer 영역 초과 방어
+	// ========================================================
+	if (firstRowPosition.x + rowWidth > context.screenSize.x)
 	{
 		return;
 	}
 
-	panel->SetPosition(panelPosition);
-
-	border->SetPosition(panelPosition);
-
-	// Command Widget 위치
-	// ========================================================
-	for (std::size_t index = 0; index < commandWidgets.size(); ++index)
+	if (firstRowPosition.y + totalHeight > context.screenSize.y)
 	{
-		const std::shared_ptr<Craft::HUDSprite>& widget = commandWidgets[index];
+		return;
+	}
 
-		if (!widget)
+	// Stratagem Row 배치
+	// ========================================================
+	for (std::size_t rowIndex = 0; rowIndex < rows.size(); ++rowIndex)
+	{
+		StratagemHUDRow& row = rows[rowIndex];
+
+		const int rowY = firstRowPosition.y + static_cast<int>(rowIndex) * (RowHeight + RowSpacing);
+
+		const Craft::Vector2 rowPosition(firstRowPosition.x, rowY);
+
+		if (row.panel)
 		{
-			continue;
+			row.panel->SetPosition(rowPosition);
 		}
 
-		const int commandX = panelPosition.x + CommandOffsetX + static_cast<int>(index) * (CommandWidth + CommandSpacing);
+		if (row.border)
+		{
+			row.border->SetPosition(rowPosition);
+		}
 
-		const int commandY = panelPosition.y + CommandOffsetY;
+		// Command 위치
+		// ====================================================
+		for (std::size_t commandIndex = 0; commandIndex < row.commandWidgets.size(); ++commandIndex)
+		{
+			const auto& widget = row.commandWidgets[commandIndex];
 
-		widget->SetPosition(Craft::Vector2(commandX, commandY));
+			if (!widget)
+			{
+				continue;
+			}
+
+			const int commandX = rowPosition.x + CommandOffsetX + static_cast<int>(commandIndex) * (CommandWidth + CommandSpacing);
+
+			const int commandY = rowPosition.y + CommandOffsetY;
+
+			widget->SetPosition(Craft::Vector2(commandX, commandY));
+		}
+
+		// Cooldown 숫자는 모든 Row의 오른쪽 끝에 정렬
+		// ====================================================
+		if (row.cooldownNumber)
+		{
+			const int cooldownX = rowPosition.x + rowWidth - RightPadding - CooldownReservedWidth;
+
+			const int cooldownY = rowPosition.y + CommandOffsetY;
+
+			row.cooldownNumber->SetPosition(Craft::Vector2(cooldownX, cooldownY));
+		}
 	}
 }
