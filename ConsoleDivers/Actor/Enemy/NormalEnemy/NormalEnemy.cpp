@@ -8,7 +8,7 @@
 using namespace Craft;
 
 NormalEnemy::NormalEnemy(const Craft::Vector2F& position)
-	: EnemyBase(position, EnemyStats{ CharacterStats{40, 40.0f}, 10, 5.0f, 100.0f, 1.0f })
+	: EnemyBase(position, EnemyStats{ CharacterStats{40, 40.0f}, 10, 5.0f, 150.0f, 1.0f })
 {
 	SetCharacterBounds(EnemyWidth, EnemyHeight);
 

@@ -108,14 +108,14 @@ private:
 
     // Chain Lightning 설정
     // 최초 적 탐색 거리
-    static constexpr float initialTargetRange = 60.0f;
+    static constexpr float initialTargetRange = 80.0f;
 
     // 첫 적을 찾을 때 허용하는 전방 Cone
     // Dot 1.0 = 정확히 정면 | Dot 0.7 정도면 약 ±45도 영역
     static constexpr float minimumAimDot = 0.70f;
 
     // 한 Enemy에서 다음 Enemy로 튈 수 있는 거리
-    static constexpr float chainRange = 35.0f;
+    static constexpr float chainRange = 45.0f;
 
     // 최초 Target 포함 최대 적중 수
     static constexpr int maxChainTargets = 4;

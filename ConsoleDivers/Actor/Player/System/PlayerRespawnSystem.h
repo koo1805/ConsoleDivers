@@ -5,6 +5,7 @@
 #include <memory>
 
 class Player;
+class RespawnHUD;
 
 class PlayerRespawnSystem
 {
@@ -22,6 +23,8 @@ public:
 	// Respawn 위치 변경
 	void SetRespawnPosition(const Craft::Vector2F& newRespawnPosition);
 
+	void SetRespawnHUD(RespawnHUD* newRespawnHUD);
+
 	// 현재 Respawn 대기 중인지 확인
 	inline bool IsWaitingForRespawn() const { return isWaitingForRespawn; }
 
@@ -38,6 +41,8 @@ private:
 
 	// Player가 다시 생성될 위치
 	Craft::Vector2F respawnPosition = Craft::Vector2F::Zero;
+
+	RespawnHUD* respawnHUD = nullptr;
 
 	// 사망 후 Respawn 대기 상태
 	bool isWaitingForRespawn = false;

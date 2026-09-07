@@ -9,6 +9,7 @@ class NumberSprite;
 class PlayerStatusHUD;
 class StratagemHUD;
 class WeaponGaugeHUD;
+class RespawnHUD;
 
 namespace Craft
 {
@@ -25,6 +26,8 @@ public:
 	void Initialize(const std::shared_ptr<Player>& player);
 
 	void Update();
+
+	inline RespawnHUD* GetRespawnHUD() const { return respawnHUD.get(); }
 
 private:
 	void UpdateLayout();
@@ -44,4 +47,6 @@ private:
 	std::unique_ptr<StratagemHUD> stratagemHUD;
 
 	std::unique_ptr<WeaponGaugeHUD> weaponGaugeHUD;
+
+	std::unique_ptr<RespawnHUD> respawnHUD;
 };

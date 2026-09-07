@@ -129,6 +129,7 @@
     <ClCompile Include="HUD\GameHUD.cpp" />
     <ClCompile Include="HUD\Player\PlayerStatusHUD.cpp" />
     <ClCompile Include="HUD\Resource\Number\NumberSprite.cpp" />
+    <ClCompile Include="HUD\Respawn\RespawnHUD.cpp" />
     <ClCompile Include="HUD\Stratagem\StratagemHUD.cpp" />
     <ClCompile Include="Level\GameLevel.cpp" />
     <ClCompile Include="Level\MainMenuLevel.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="HUD\HUDLayoutContext.h" />
     <ClInclude Include="HUD\Player\PlayerStatusHUD.h" />
     <ClInclude Include="HUD\Resource\Number\NumberSprite.h" />
+    <ClInclude Include="HUD\Respawn\RespawnHUD.h" />
     <ClInclude Include="HUD\Stratagem\StratagemHUD.h" />
     <ClInclude Include="Level\GameLevel.h" />
     <ClInclude Include="Level\MainMenuLevel.h" />

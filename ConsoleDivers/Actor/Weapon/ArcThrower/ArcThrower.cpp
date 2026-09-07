@@ -30,7 +30,7 @@ ArcThrower::ArcThrower(const Craft::Vector2F& position)
 	: WeaponBase(
 		WeaponSlotType::Support,
 		WeaponAmmoData{ WeaponAmmoType::Infinite, 0, 0, 0, 0, 0.0f },
-		WeaponCombatData{ 12 },
+		WeaponCombatData{ 15 },
 		position)
 {
 	// 오른쪽 방향 Sprite를 원본으로 한 번만 생성

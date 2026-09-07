@@ -79,6 +79,11 @@ void GameLevel::OnInitialized()
 	// Game HUD 생성
 	gameHUD = std::make_unique<GameHUD>();
 	gameHUD->Initialize(player);
+
+	if (playerRespawnSystem && gameHUD)
+	{
+		playerRespawnSystem->SetRespawnHUD(gameHUD->GetRespawnHUD());
+	}
 }
 
 void GameLevel::Tick(float deltaTime)

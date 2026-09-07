@@ -10,6 +10,7 @@
 #include <HUD/Player/PlayerStatusHUD.h>
 #include <HUD/Stratagem/StratagemHUD.h>
 #include <HUD/Equipment/WeaponGaugeHUD.h>
+#include <HUD/Respawn/RespawnHUD.h>
 
 GameHUD::GameHUD() = default;
 
@@ -55,6 +56,9 @@ void GameHUD::Initialize(const std::shared_ptr<Player>& player)
 	// WeaponGaugeHUD
 	weaponGaugeHUD = std::make_unique<WeaponGaugeHUD>();
 	weaponGaugeHUD->Initialize(canvas, player);
+
+	respawnHUD = std::make_unique<RespawnHUD>();
+	respawnHUD->Initialize(canvas, numberSpriteSet->GetDigitPointers());
 
 	// HUD 최종 위치 계산
 	UpdateLayout();
@@ -121,5 +125,10 @@ void GameHUD::UpdateLayout()
 	if (stratagemHUD)
 	{
 		stratagemHUD->UpdateLayout(context);
+	}
+
+	if (respawnHUD)
+	{
+		respawnHUD->UpdateLayout(context);
 	}
 }
