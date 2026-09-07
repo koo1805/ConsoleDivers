@@ -31,6 +31,10 @@ public:
 
     virtual void CancelFire() override;
 
+    virtual bool IsCharging() const override { return isCharging; }
+
+    virtual float GetChargeProgress() const override;
+
     // HUD 슬롯
     virtual const Craft::PixelSprite* GetHUDSprite() const override { return &rightPixel; }
 

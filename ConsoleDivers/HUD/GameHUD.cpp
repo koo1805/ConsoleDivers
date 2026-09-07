@@ -9,6 +9,7 @@
 #include <HUD/Resource/Number/NumberSprite.h>
 #include <HUD/Player/PlayerStatusHUD.h>
 #include <HUD/Stratagem/StratagemHUD.h>
+#include <HUD/Equipment/WeaponGaugeHUD.h>
 
 GameHUD::GameHUD() = default;
 
@@ -51,6 +52,10 @@ void GameHUD::Initialize(const std::shared_ptr<Player>& player)
 	stratagemHUD =std::make_unique<StratagemHUD>();
 	stratagemHUD->Initialize(canvas, player, numberSpriteSet->GetDigitPointers());
 
+	// WeaponGaugeHUD
+	weaponGaugeHUD = std::make_unique<WeaponGaugeHUD>();
+	weaponGaugeHUD->Initialize(canvas, player);
+
 	// HUD 최종 위치 계산
 	UpdateLayout();
 
@@ -78,6 +83,11 @@ void GameHUD::Update()
 	if (stratagemHUD)
 	{
 		stratagemHUD->Update();
+	}
+	
+	if (weaponGaugeHUD)
+	{
+		weaponGaugeHUD->Update();
 	}
 }
 

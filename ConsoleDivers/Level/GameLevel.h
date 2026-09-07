@@ -9,13 +9,13 @@
 // 전방 선언
 class GameHUD;
 class Player;
-class NormalEnemy;
-
+class WorldMap;
 class ArcThrower;
+class EnemySpawnManager;
+class PlayerRespawnSystem;
 
 namespace Craft
 {
-	class TestBG;
 	class CameraController;
 }
 
@@ -42,17 +42,19 @@ public:
 private:
 	std::shared_ptr<Player> player;
 
-	std::shared_ptr<NormalEnemy> normalEnemy;
-	// test용
-	std::shared_ptr<Craft::TestBG> testBGActor;
-
 	std::shared_ptr<Craft::CameraController> cameraController;
+
+	std::unique_ptr<WorldMap> worldMap;
 
 	NavigationGrid navigationGrid;
 
 	std::unique_ptr<Craft::QuadTree> quadTree;
 
+	std::unique_ptr<EnemySpawnManager> enemySpawnManager;
+
 	// 게임 HUD
 	std::unique_ptr<GameHUD> gameHUD;
+
+	std::unique_ptr<PlayerRespawnSystem> playerRespawnSystem;
 };
 

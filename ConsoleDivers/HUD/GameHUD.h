@@ -8,6 +8,7 @@ class AmmoHUD;
 class NumberSprite;
 class PlayerStatusHUD;
 class StratagemHUD;
+class WeaponGaugeHUD;
 
 namespace Craft
 {
@@ -41,4 +42,6 @@ private:
 	std::unique_ptr<PlayerStatusHUD> playerStatusHUD;
 
 	std::unique_ptr<StratagemHUD> stratagemHUD;
+
+	std::unique_ptr<WeaponGaugeHUD> weaponGaugeHUD;
 };

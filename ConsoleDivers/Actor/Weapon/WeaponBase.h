@@ -43,8 +43,17 @@ public:
 	// HUD에 표시할 무기 대표 Sprite 반환
 	virtual const Craft::PixelSprite* GetHUDSprite() const { return nullptr; }
 
+	// 차지 하는지
+	virtual bool IsCharging() const { return false; }
+
+	// 차지 진행 바
+	virtual float GetChargeProgress() const { return 0.0f; }
+
 	//재장전
 	void StartReload();
+
+	// 장전 진행 바
+	float GetReloadProgress() const;
 
 	// 장착
 	void Equip(const std::shared_ptr<Craft::Actor>& newOwner);

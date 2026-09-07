@@ -103,6 +103,34 @@ void WeaponBase::StartReload()
 	runtimeData.reloadTimer = 0.0f;
 }
 
+float WeaponBase::GetReloadProgress() const
+{
+	// 장전중이 아니라면
+	if (!runtimeData.isReloading)
+	{
+		return 0.0f;
+	}
+
+	// 예외 처리
+	if (ammoData.reloadDuration <= 0.0f)
+	{
+		return 0.0f;
+	}
+
+	float progress = runtimeData.reloadTimer / ammoData.reloadDuration;
+
+	if (progress < 0.0f)
+	{
+		progress = 0.0f;
+	}
+	else if (progress > 1.0f)
+	{
+		progress = 1.0f;
+	}
+
+	return progress;
+}
+
 void WeaponBase::UpdateReload(float deltaTime)
 {
 	if (!runtimeData.isReloading)

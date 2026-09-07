@@ -8,12 +8,12 @@
 #include <Actor/Enemy/EnemyBase.h>
 #include <HUD/Manager/HUDManager.h>
 
+#include <Actor/Player/System/PlayerRespawnSystem.h>
+#include <Actor/Enemy/Manager/EnemySpawnManager.h>
 #include <HUD/GameHUD.h>
 #include <Actor/Weapon/Shotgun/Shotgun.h>
 #include <Actor/Weapon/ArcThrower/ArcThrower.h>
-#include <Actor/Enemy/NormalEnemy/NormalEnemy.h>
-
-#include <Test/TestBG.h>
+#include <Actor/Map/WorldMap.h>
 
 #include <Windows.h>
 #include <cstdio>
@@ -27,12 +27,14 @@ void GameLevel::OnInitialized()
 	// 부모 Level 초기화
 	Level::OnInitialized();
 
-	testBGActor = SpawnActor<Craft::TestBG>();
-	Craft::Renderer::Get().GetCamera().SetCameraClampSize(Craft::TestBG::GetWorldSize());
+	worldMap = std::make_unique<WorldMap>();
 
-	//---------------------------------------------------------
-	const Craft::Vector2 worldSize = Craft::TestBG::GetWorldSize();
+	worldMap->Initialize(*this, navigationGrid);
 
+	const Craft::Vector2 worldSize = worldMap->GetWorldSize();
+
+	Craft::Renderer::Get().GetCamera().SetCameraClampSize(worldSize);
+	
 	quadTree = std::make_unique<Craft::QuadTree>(
 		Craft::QuadTreeBounds(
 			0.0f,
@@ -44,98 +46,40 @@ void GameLevel::OnInitialized()
 	// QuadTree Debug 연결
 	DebugManager::Get().SetQuadTreeDebugData(quadTree.get());
 
-	constexpr int navigationCellSize = 10;
-
-	const int gridWidth = worldSize.x / navigationCellSize;
-
-	const int gridHeight =
-		worldSize.y / navigationCellSize;
-
-	navigationGrid.Initialize(
-		gridWidth,
-		gridHeight,
-		navigationCellSize);
-
-	// 테스트용 벽
-	for (int y = 20; y < 50; ++y)
-	{
-		navigationGrid.SetWalkable(
-			40,
-			y,
-			false);
-	}
-
-	// -----------------------------------------------------------
-
 	player = SpawnActor<Player>();
 
-	// NormalEnemy 생성
-	normalEnemy = SpawnActor<NormalEnemy>(navigationGrid.GridToWorld(Craft::Vector2(35, 30)));
-
-	//--------------------------------------------------------------
-	auto enemy2 =
-		SpawnActor<NormalEnemy>(
-			navigationGrid.GridToWorld(
-				Craft::Vector2(38, 30)
-			)
-		);
-
-	auto enemy3 =
-		SpawnActor<NormalEnemy>(
-			navigationGrid.GridToWorld(
-				Craft::Vector2(41, 30)
-			)
-		);
-
-	auto enemy4 =
-		SpawnActor<NormalEnemy>(
-			navigationGrid.GridToWorld(
-				Craft::Vector2(44, 30)
-			)
-		);
-	//--------------------------------------------------------------
-
-	// EnemyBase에 구현된 A* 기능이 사용할 NavigationGrid 연결
-	if (normalEnemy)
+	if (worldMap)
 	{
-		normalEnemy->SetNavigationGrid(&navigationGrid);
+		player->SetPosition(worldMap->GetPlayerSpawnPosition());
 	}
 
-	enemy2->SetNavigationGrid(
-		&navigationGrid
-	);
+	playerRespawnSystem = std::make_unique<PlayerRespawnSystem>();
 
-	enemy3->SetNavigationGrid(
-		&navigationGrid
-	);
-
-	enemy4->SetNavigationGrid(
-		&navigationGrid
-	);
+	if (worldMap)
+	{
+		playerRespawnSystem->Initialize(player, worldMap->GetPlayerSpawnPosition());
+	}
 
 	SpawnActor<Shotgun>(Craft::Vector2F(player->GetPosition().x + 12.0f, player->GetPosition().y));
-	std::shared_ptr<ArcThrower> arcThrower = SpawnActor<ArcThrower>(Craft::Vector2F(player->GetPosition().x + 18.0f, player->GetPosition().y));
-
-	InitializeArcThrower(arcThrower);
 
 	cameraController = std::make_shared<Craft::CameraController>(Craft::Renderer::Get().GetCamera());
 	cameraController->SetTargetPosition(player->GetPosition());
 
 	cameraController->SnapToTarget();
+
 	// 디버그 매니저에 카메라 정보를 연결
 	DebugManager::Get().SetCameraController(cameraController.get());
 
-	// A* 디버그 시각화에 사용할 데이터 연결
-	if (normalEnemy)
-	{
-		DebugManager::Get().SetAStarDebugData(&navigationGrid, &normalEnemy->GetPathFinder());
-	}
+	enemySpawnManager = std::make_unique<EnemySpawnManager>();
+
+	enemySpawnManager->Initialize(*this, navigationGrid, worldSize);
+
+	DebugManager::Get().SetAStarDebugData(&navigationGrid, {});
 
 	// Game HUD 생성
 	gameHUD = std::make_unique<GameHUD>();
 	gameHUD->Initialize(player);
 }
-
 
 void GameLevel::Tick(float deltaTime)
 {
@@ -143,13 +87,51 @@ void GameLevel::Tick(float deltaTime)
 	// Level이 가지고 있는 Actor들의 Tick 실행
 	Level::Tick(deltaTime);
 
+	const std::vector<std::shared_ptr<EnemyBase>> enemies = FindActors<EnemyBase>();
+
+	std::vector<const AStarPathFinder*> aStarPathFinder;
+
+	aStarPathFinder.reserve(enemies.size());
+
+	for (const std::shared_ptr<EnemyBase>& enemy : enemies)
+	{
+		if (!enemy)
+		{
+			continue;
+		}
+
+		if (!enemy->IsActive())
+		{
+			continue;
+		}
+
+		if (enemy->IsDead())
+		{
+			continue;
+		}
+
+		aStarPathFinder.emplace_back(&enemy->GetPathFinder());
+	}
+
+	DebugManager::Get().SetAStarDebugData(&navigationGrid, aStarPathFinder);
+
+	if (enemySpawnManager)
+	{
+		enemySpawnManager->Tick(deltaTime);
+	}
+
+	if (playerRespawnSystem)
+	{
+		playerRespawnSystem->Update(deltaTime);
+	}
+
 	if (quadTree)
 	{
 		// 이전 프레임의 공간 데이터 제거
 		quadTree->Clear();
 
 		// Player 삽입
-		if (player && player->IsActive())
+		if (player && player->IsActive() && !player->IsDead())
 		{
 			quadTree->Insert(player);
 		}

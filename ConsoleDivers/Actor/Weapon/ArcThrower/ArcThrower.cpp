@@ -126,6 +126,33 @@ void ArcThrower::CancelFire()
 	chargeTime = 0.0f;
 }
 
+float ArcThrower::GetChargeProgress() const
+{
+	if (!isCharging)
+	{
+		return 0.0f;
+	}
+
+	// 예외 처리
+	if (minimumChargeTime <= 0.0f)
+	{
+		return 0.0f;
+	}
+
+	float progress = chargeTime / minimumChargeTime;
+
+	if (progress > 1.0f)
+	{
+		progress = 1.0f;
+	}
+	else if (progress < 0.0f)
+	{
+		progress = 0.0f;
+	}
+
+	return progress;
+}
+
 void ArcThrower::OnFacingChanged()
 {
 	if (IsFacingRight())

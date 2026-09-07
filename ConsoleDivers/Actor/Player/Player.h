@@ -52,6 +52,9 @@ public:
 	// Player 사망 시 보유한 모든 Weapon을 Drop
 	void DropAllWeaponsOnDeath();
 
+	// 리스폰
+	void Respawn(const Craft::Vector2F& respawnPosition);
+
 	// 무기 슬롯 변경
 	void ChangeWeaponSlot(WeaponSlotType newSlot);
 
@@ -85,6 +88,9 @@ private:
 	void PlayerPartsGenerate();
 
 	void Move(float xDirection, float yDirection, float deltaTime);
+
+	// 현재 월드 범위 안으로 위치 제한
+	void ClampToWorldBounds();
 
 	// 현재 Player의 화면상 위치와 마우스 화면 위치를 비교해서 좌/우 방향 결정
 	void UpdateFacingDirection();

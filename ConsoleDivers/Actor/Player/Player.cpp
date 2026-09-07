@@ -171,6 +171,76 @@ void Player::DropAllWeaponsOnDeath()
 	activeWeaponSlot = WeaponSlotType::Primary;
 }
 
+void Player::Respawn(const Craft::Vector2F& respawnPosition)
+{
+	// 위치 초기화
+	SetPosition(respawnPosition);
+
+	// 리스폰하는 순간 이전 위치도 리스폰 위치로 초기화
+	// 충돌처리 판단하는 문제 방지
+	SavePreviousState();
+
+	// HP 복구
+	SetCurrentHealth(GetMaxHealth());
+
+	// 캐릭터 부위 복구
+	RestorePart(CharacterPartType::Head);
+	RestorePart(CharacterPartType::Body);
+	RestorePart(CharacterPartType::Legs);
+	RestorePart(CharacterPartType::LeftHand);
+	RestorePart(CharacterPartType::RightHand);
+
+	// 이동 상태 초기화
+	isMoving = false;
+	isDiving = false;
+	diveDirection = Craft::Vector2F::Zero;
+	diveTimer = 0.0f;
+
+	isInvincible = false;
+	invincibleTimer = 0.0f;
+
+	currentStamina = GetCharacterStats().maxStamina;
+	staminaRecoveryTimer = 0.0f;
+	isStaminaRecoveryDelayed = false;
+
+	stratagemSystem.Reset();
+
+	primaryWeapon.reset();
+	supportWeapon.reset();
+	activeWeaponSlot = WeaponSlotType::Primary;
+
+	// 충돌 상태 복구
+	SetCollisionLayer(GameCollision::Player);
+	SetCollisionMask(
+		GameCollision::Mask(GameCollision::Enemy)			|
+		GameCollision::Mask(GameCollision::EnemyProjectile)	|
+		GameCollision::Mask(GameCollision::Weapon)			|
+		GameCollision::Mask(GameCollision::World));
+
+	// 애니메이션 초기화
+	animator.SetAnimationState(PlayerAnimationState::Idle);
+
+	// 무기 재지급
+	std::shared_ptr<Craft::Level> level = GetOwner();
+
+	if (!level)
+	{
+		return;
+	}
+
+	std::shared_ptr<Shotgun> shotgun = level->SpawnActor<Shotgun>(GetPosition());
+
+	if (!shotgun)
+	{
+		return;
+	}
+
+	EquipWeapon(shotgun);
+
+	ChangeWeaponSlot(WeaponSlotType::Primary);
+	
+}
+
 void Player::ChangeWeaponSlot(WeaponSlotType newSlot)
 {
 	// 변경할 슬롯에 실제 Weapon이 있는지 확인
@@ -554,32 +624,49 @@ void Player::Move(float xDirection, float yDirection, float deltaTime)
 	position.x += xDirection * finalMoveSpeed * deltaTime;
 	position.y += yDirection * finalMoveSpeed * deltaTime;
 
-	//* 화면 왼쪽 벗어나지 않도록 처리
-	if (position.x < 0)
+	// 이동 범위 제한
+	ClampToWorldBounds();
+
+	// 위치 업데이트
+	SetPosition(position);
+}
+
+void Player::ClampToWorldBounds()
+{
+	const Craft::Vector2 worldSize = Renderer::Get().GetCamera().GetClampWorldSize();
+
+	// 아직 월드크기가 설정 안 된 경우
+	if (worldSize.x <= 0 || worldSize.y <= 0)
+	{
+		return;
+	}
+
+	// 왼쪽
+	if (position.x < 0.0f)
 	{
 		position.x = 0.0f;
 	}
 
-	// 화면 오른쪽 벗어나지 않도록 처리
-	if (position.x + GetWidth() >= 1080.0f)
-	{
-		position.x = 1080.0f - GetWidth();
-	}
-
-	// 화면 위쪽 벗어나지 않도록 처리
-	if (position.y < 0)
+	//위
+	if (position.y < 0.0f)
 	{
 		position.y = 0.0f;
 	}
 
-	// 화면 아래쪽 벗어나지 않도록 처리
-	if (position.y + GetHeight() >= 960.0f)
+	const float maxX = static_cast<float>(worldSize.x - GetWidth());
+	const float maxY = static_cast<float>(worldSize.y - GetHeight());
+
+	// 오른쪽
+	if (position.x > maxX)
 	{
-		position.y = 960.0f - GetHeight();
+		position.x = maxX;
 	}
 
-	// 위치 업데이트
-	SetPosition(position);
+	// 아래
+	if (position.y > maxY)
+	{
+		position.y = maxY;
+	}
 }
 
 void Player::UpdateFacingDirection()
@@ -688,29 +775,7 @@ void Player::UpdateDive(float deltaTime)
 	position.x += diveDirection.x * diveSpeed * deltaTime;
 	position.y += diveDirection.y * diveSpeed * deltaTime;
 
-	//* 화면 왼쪽 벗어나지 않도록 처리
-	if (position.x < 0)
-	{
-		position.x = 0.0f;
-	}
-
-	// 화면 오른쪽 벗어나지 않도록 처리
-	if (position.x + GetWidth() >= 1080.0f)
-	{
-		position.x = 1080.0f - GetWidth();
-	}
-
-	// 화면 위쪽 벗어나지 않도록 처리
-	if (position.y < 0)
-	{
-		position.y = 0.0f;
-	}
-
-	// 화면 아래쪽 벗어나지 않도록 처리
-	if (position.y + GetHeight() >= 960.0f)
-	{
-		position.y = 960.0f - GetHeight();
-	}
+	ClampToWorldBounds();
 
 	SetPosition(position);
 

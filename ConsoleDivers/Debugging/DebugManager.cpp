@@ -105,9 +105,10 @@ namespace Craft
 		debugRenderer.DebugFlush();
 	}
 
-	void DebugManager::SetAStarDebugData(const NavigationGrid* newNavigationGrid, const AStarPathFinder* newPathFinder)
+	void DebugManager::SetAStarDebugData(const NavigationGrid* newNavigationGrid, const std::vector<const AStarPathFinder*>& newPathFinder)
 	{
 		navigationGrid = newNavigationGrid;
+
 		aStarPathFinder = newPathFinder;
 	}
 
@@ -282,7 +283,7 @@ namespace Craft
 		}
 
 		// 필요한 데이터가 연결되지 않았다면 종료
-		if (!navigationGrid || !aStarPathFinder)
+		if (!navigationGrid)
 		{
 			return;
 		}
@@ -329,22 +330,30 @@ namespace Craft
 			}
 		}
 
-		// 2. Open List 표시
-		for (const Craft::Vector2& position : aStarPathFinder->GetOpenList())
+		for (const AStarPathFinder* pathFinder : aStarPathFinder)
 		{
-			drawGridCell(position, Craft::ColorRGB(90, 160, 90), 905);
-		}
+			if (!pathFinder)
+			{
+				continue;
+			}
 
-		// 3. Closed List 표시
-		for (const Craft::Vector2& position : aStarPathFinder->GetClosedList())
-		{
-			drawGridCell(position, Craft::ColorRGB(80, 110, 170), 910);
-		}
+			// 2. Open List 표시
+			for (const Craft::Vector2& position : pathFinder->GetOpenList())
+			{
+				drawGridCell(position, Craft::ColorRGB(90, 160, 90), 905);
+			}
 
-		// 4. 최종 Path 표시
-		for (const Craft::Vector2& position : aStarPathFinder->GetLastPath())
-		{
-			drawGridCell(position, Craft::ColorRGB(230, 200, 70), 920);
+			// 3. Closed List 표시
+			for (const Craft::Vector2& position : pathFinder->GetClosedList())
+			{
+				drawGridCell(position, Craft::ColorRGB(80, 110, 170), 910);
+			}
+
+			// 4. 최종 Path 표시
+			for (const Craft::Vector2& position : pathFinder->GetLastPath())
+			{
+				drawGridCell(position, Craft::ColorRGB(230, 200, 70), 920);
+			}
 		}
 	}
 

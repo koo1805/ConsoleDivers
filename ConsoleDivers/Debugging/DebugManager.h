@@ -10,6 +10,7 @@
 // Craft 외 클래스 전방 선언
 class NavigationGrid;
 class AStarPathFinder;
+class EnemyBase;
 
 namespace Craft
 {
@@ -54,7 +55,7 @@ namespace Craft
 		void Draw();
 
 		// A* 디버그에서 사용할 Navigation / PathFinder 연결
-		void SetAStarDebugData(const NavigationGrid* newNavigationGrid, const AStarPathFinder* newPathFinder);
+		void SetAStarDebugData(const NavigationGrid* newNavigationGrid, const std::vector<const AStarPathFinder*>& newPathFinder);
 
 		// QuadTree 시각화에서 사용할 QuadTree 연결
 		void SetQuadTreeDebugData(const QuadTree* newQuadTree);
@@ -130,8 +131,8 @@ namespace Craft
 		// GameLevel이 소유하고 있는 NavigationGrid를 참조
 		const NavigationGrid* navigationGrid = nullptr;
 
-		// GameLevel이 소유하고 있는 AStarPathFinder를 참조
-		const AStarPathFinder* aStarPathFinder = nullptr;
+		// 각 enemy가 소유하고 있는 AStarPathFinder참조
+		std::vector<const AStarPathFinder*> aStarPathFinder;
 
 		// F4로 A* 시각화 ON / OFF
 		bool aStarDebugEnabled = false;
