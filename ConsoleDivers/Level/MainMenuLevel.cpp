@@ -466,7 +466,7 @@ void MainMenuLevel::CreateMenuHUD()
 
 	// 제목
 	// --------------------------------------------------------
-	const int titleX = (screenSize.x - titleSprite->GetWidth()) / 2;
+	const int titleX = 50;
 
 	const int titleY = screenSize.y / 5;
 
